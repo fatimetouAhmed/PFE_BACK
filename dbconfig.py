@@ -62,7 +62,7 @@ async def get_infoexamun(id_etu:int,user_id: int = Depends(recupere_userid),user
                 # result= await write_data_case_etudiant(id_etu, user_id, user)
                 # if result:
                 #  return result
-             return "votre examun n est pas a ce moment"
+             return await write_data_case_etudiant(id_etu, user_id, user)
     else:   
         return "Rentrez"
 
