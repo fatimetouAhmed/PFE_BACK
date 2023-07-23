@@ -174,9 +174,13 @@ def get_user(username: str):
     db.close()
     print(user)
     return user
+blacklisted_tokens = set()
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     try:
+            # Vérifier si le token est dans la liste noire
+        if token in blacklisted_tokens:
+            raise HTTPException(status_code=401, detail="Token révoqué")
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("email")
         role: str = payload.get("role")  # Récupération du rôle depuis le token

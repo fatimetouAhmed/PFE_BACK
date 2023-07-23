@@ -8,10 +8,12 @@ from fastapi.encoders import jsonable_encoder
 from sqlalchemy import create_engine, Column, Integer, String ,Sequence,and_
 from sqlalchemy.ext.declarative import declarative_base
 from fastapi.security import OAuth2PasswordRequestForm
-
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from jose import JWTError,jwt
+from passlib.context import CryptContext
 import datetime
 from auth.authConfig import recupere_userid,create_user,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
-
+import redis
 #auuth
 #from fastapi import FastAPI, HTTPException, status
 from datetime import datetime, timedelta
@@ -90,6 +92,7 @@ app.include_router(historique_router, prefix="/historiques", tags=["Historiques"
 # async def home():
 #     return {"message": "Bienvenue sur l'API de gestion des utilisateurs et des salles."}
 
+
 @app.post("/registeruser/", response_model=UserResponse)
 def create_user_route(user: UserCreate, db: Session = Depends(get_db)):
     return create_user(db, user)
@@ -163,6 +166,41 @@ async def get_test(user_id: int = Depends(recupere_userid), user: User = Depends
         print(f"Une erreur s'est produite : {str(e)}")
         return False
 
+#authentification
+# ...
+
+SECRET_KEY = "your-secret-key"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+# ...
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
+
+blacklisted_tokens = set()
+
+@app.post("/logout/")
+def logout(access_token: str = Depends(oauth2_scheme)):
+    try:
+        # Vérifier si le token a déjà été ajouté à la liste noire
+        if access_token in blacklisted_tokens:
+            raise HTTPException(status_code=401, detail="Token déjà révoqué")
+        
+        # Décoder le token d'accès pour obtenir son contenu (nom d'utilisateur et rôle)
+        payload = jwt.decode(access_token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("email")
+        role: str = payload.get("role")
+        if email is None or role is None:
+            raise HTTPException(status_code=401, detail="Token d'authentification invalide")
+
+        # Ajouter le token à la liste noire
+        blacklisted_tokens.add(access_token)
+
+        return {"message": "Déconnexion réussie"}
+
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token d'authentification invalide")
+
 if __name__== "__main__":
-   uvicorn.run(app,port=8000 ,host='127.0.0.1')
+   uvicorn.run(app,port=8000 ,host='192.168.8.106')
    #192.168.55.113
