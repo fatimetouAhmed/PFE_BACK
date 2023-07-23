@@ -1,7 +1,7 @@
 from sqlalchemy import select, join, alias
 from sqlalchemy.orm import selectinload,joinedload,sessionmaker
 from fastapi import APIRouter,Depends
-from auth.authConfig import create_user,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
+from auth.authConfig import Surveillant,Superviseur, recupere_userid,create_user,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
 from config.db import con
 from models.surveillance import surveillances
 from models.surveillance import Surveillants
@@ -27,6 +27,58 @@ async def read_data(user: User = Depends(check_Adminpermissions)):
     
     return results
     # return con.execute(surveillances.select().fetchall())
+@surveillance_router.get("/surveillances/nom")
+async def read_data(user: User = Depends(check_superviseurpermissions)):
+    # Créer une session
+    Session = sessionmaker(bind=con)
+    session = Session()
+
+    query = session.query(User.prenom).join(Surveillant).all()
+    results = []
+    for row in query:
+        result = {
+            "nom": row[0],
+        }  # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
+        results.append(result)
+
+    return results
+@surveillance_router.get("/surveillances/{nom}")
+async def read_data(nom:str,user: User = Depends(check_superviseurpermissions)):
+    # Créer une session
+    Session = sessionmaker(bind=con)
+    session = Session()
+
+    query = session.query(Surveillant).join(User).filter(User.prenom==nom).all()
+    id=0
+    for surveillance in query:
+        id=surveillance.user_id  
+    return id
+
+    return results
+@surveillance_router.get("/surveillance")
+async def read_data(user_id: int = Depends(recupere_userid), user: User = Depends(check_superviseurpermissions)):
+    # Créer une session
+    Session = sessionmaker(bind=con)
+    session = Session()
+
+    query = session.query(Surveillant.user_id).join(Superviseur).filter(Surveillant.superviseur_id == user_id).all()
+
+    ids = [row[0] for row in query]  # Extract the list of IDs from the query results
+
+    query1 = session.query(surveillances).join(Surveillants).filter(Surveillants.user_id.in_(ids)).all()
+    results = []
+    for row in query1:
+        result = {
+            "id": row.id,
+            "date_debut": row.date_debut,
+            "date_fin": row.date_fin,
+            "surveillant_id": row.surveillant_id,
+            "salle_id": row.salle_id,
+        }  # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
+        results.append(result)
+
+    return results
+
 
 @surveillance_router.get("/{id}")
 async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):

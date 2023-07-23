@@ -153,6 +153,18 @@ def get_current_user_route(user: User= Depends(get_current_user)):
         "role": user.role
                  }
       return user_data
+@app.get("/current_user_id")
+def get_current_user_route(user: User = Depends(get_current_user)):
+
+    user_data = {
+        "id": user.id,
+        "nom": user.nom,
+        "prenom": user.prenom,
+        "email": user.email,
+        "role": user.role
+    }
+    user_id = user_data["id"]
+    return user_id
 @app.get("/test_his")
 async def get_test(user_id: int = Depends(recupere_userid), user: User = Depends(check_survpermissions)):
     try:
