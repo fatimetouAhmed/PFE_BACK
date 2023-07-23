@@ -24,7 +24,8 @@ async def read_data(user_id: int = Depends(recupere_userid),user: User = Depends
         results.append(result) 
     return results
 @notification_router.get("/notifications")
-async def read_data():
+async def read_data(user: User = Depends(check_superviseurpermissions)):
+    #user: User = Depends(check_superviseurpermissions
     Session = sessionmaker(bind=con)
     session = Session()
     q3 = session.query(Notifications.id,Notifications.content,Notifications.date,Notifications.is_read).filter(Notifications.is_read==False)

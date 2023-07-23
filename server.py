@@ -156,6 +156,18 @@ def get_current_user_route(user: User= Depends(get_current_user)):
         "role": user.role
                  }
       return user_data
+@app.get("/current_user_id")
+def get_current_user_route(user: User = Depends(get_current_user)):
+
+    user_data = {
+        "id": user.id,
+        "nom": user.nom,
+        "prenom": user.prenom,
+        "email": user.email,
+        "role": user.role
+    }
+    user_id = user_data["id"]
+    return user_id
 @app.get("/test_his")
 async def get_test(user_id: int = Depends(recupere_userid), user: User = Depends(check_survpermissions)):
     try:
@@ -202,5 +214,5 @@ def logout(access_token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=401, detail="Token d'authentification invalide")
 
 if __name__== "__main__":
-   uvicorn.run(app,port=8000 ,host='192.168.8.106')
+   uvicorn.run(app,port=8000 ,host='127.0.0.1')
    #192.168.55.113
