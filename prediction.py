@@ -29,7 +29,7 @@ models = [
 async def predict_face(image_path,user_id: int = Depends(recupere_userid),user: User = Depends(check_survpermissions)):
   #  try:     
     #result = DeepFace.verify(image_path, img2_path = "image.jpg")
-        results = DeepFace.find(img_path =image_path, db_path = "C:/Users/pc/Desktop/PFE/curd_fastapi/image",model_name=models[1],enforce_detection=False)
+        results = DeepFace.find(img_path =image_path, db_path = "C:/Users/hp/Desktop/PFE/PFE_back/PFE_BACK/image",model_name=models[1],enforce_detection=False)
         try:  #if  results
           print ("resultats",results)
           photo = list(map(lambda x: x['identity'],results))
@@ -41,7 +41,7 @@ async def predict_face(image_path,user_id: int = Depends(recupere_userid),user: 
             url=photo[0][0]
             print("url:",url)
             id=get_etudiant(url)
-            donne=await get_infoexamun(id)
+            donne=await get_infoexamun(id,user_id,user)
             return donne
         except Exception as e:
            result=await write_data(user_id,user)
