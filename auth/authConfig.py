@@ -37,6 +37,7 @@ class User(Base):
     email = Column(String(255), unique=True, index=True)
     pswd = Column(String(255))
     role = Column(String(255))
+    photo = Column(String(250))
 
     surveillant = relationship("Surveillant", back_populates="user", uselist=False)
     administrateur = relationship("Administrateur", back_populates="user", uselist=False)
@@ -80,6 +81,7 @@ class UserCreate(BaseModel):
     email: str
     pswd: str
     role: str
+    photo:str
     superviseur_id: Optional[int] = None  # Champ superviseur_id optionnel
 
 class UserResponse(BaseModel):
@@ -88,7 +90,7 @@ class UserResponse(BaseModel):
     prenom: str
     email: str
     role: str
-
+    photo:str
 
 # Fonction pour hacher le mot de passe
 def hash_password(password: str) -> str:
@@ -99,7 +101,7 @@ def hash_password(password: str) -> str:
 # Fonction pour ajouter un utilisateur
 def create_user(db: Session, user: UserCreate):
     hashed_password = hash_password(user.pswd)
-    db_user = User(nom=user.nom, prenom=user.prenom, email=user.email, pswd=hashed_password, role=user.role)
+    db_user = User(nom=user.nom, prenom=user.prenom, email=user.email, pswd=hashed_password, role=user.role,photo=user.photo)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
@@ -121,7 +123,7 @@ def create_user(db: Session, user: UserCreate):
      db.commit()
      db.refresh(superviseur)
 
-    return UserResponse(id=db_user.id, nom=db_user.nom, prenom=db_user.prenom, email=db_user.email, role=db_user.role)
+    return UserResponse(id=db_user.id, nom=db_user.nom, prenom=db_user.prenom, email=db_user.email, role=db_user.role,photo=db_user.photo)
 
 
 # Route pour créer un utilisateur
@@ -240,7 +242,9 @@ def recupere_user(user: User= Depends(get_current_user)):
         "nom": user.nom,
         "prenom": user.prenom,
         "email": user.email,
-        "role": user.role
+        "role": user.role,
+        "photo": user.photo
+
                  }
       return user_data
 def recupere_userid(user: User = Depends(get_current_user)):
@@ -249,7 +253,9 @@ def recupere_userid(user: User = Depends(get_current_user)):
         "nom": user.nom,
         "prenom": user.prenom,
         "email": user.email,
-        "role": user.role
+        "role": user.role,
+        "photo": user.photo
+
     }
     user_id = user_data["id"]
     return user_id
