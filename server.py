@@ -44,12 +44,28 @@ Session = sessionmaker(bind=con)
 # Create a session
 session = Session
 #auth
-app.add_middleware(CORSMiddleware,
-                   allow_origins=["*"],
-                   allow_credentials=True,
-                   allow_methods=["*"],
-                   allow_headers=["*"],
-                   )
+# origins = ["*"]
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=origins,
+#     allow_credentials=True,
+#     allow_methods=["*"],
+#     allow_headers=["*"],
+# )
+# origins = [
+#     # Add the origins (domains) that you want to allow access from
+#     "http://localhost:58144",
+#     "http://your-another-origin.com",
+#     # Add more origins if needed
+# ]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow requests from any origin (*)
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # Définir les routes pour l'ensemble d'itinéraires utilisateur
 # app.include_router(user_router, prefix="", tags=["Utilisateurs"])
 
@@ -213,6 +229,6 @@ def logout(access_token: str = Depends(oauth2_scheme)):
     except JWTError:
         raise HTTPException(status_code=401, detail="Token d'authentification invalide")
 
-if __name__== "__main__":
-   uvicorn.run(app,port=8000 ,host='127.0.0.1')
+if __name__ == "__main__":
+    uvicorn.run(app, port=8000, host='127.0.0.1')
    #192.168.55.113

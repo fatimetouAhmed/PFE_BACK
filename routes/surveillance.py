@@ -37,7 +37,7 @@ async def read_data(user: User = Depends(check_superviseurpermissions)):
     results = []
     for row in query:
         result = {
-            "nom": row[0],
+            "prenom": row[0],
         }  # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
         results.append(result)
 

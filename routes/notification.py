@@ -41,6 +41,17 @@ async def read_data(user: User = Depends(check_superviseurpermissions)):
         }
         results.append(result) 
     return results
+@notification_router.get("/nb_notifications_no_read")
+async def  read_data(user: User = Depends(check_superviseurpermissions)):
+    i=0
+    Session = sessionmaker(bind=con)
+    session = Session()
+    q3 = session.query(Notifications.id,Notifications.content,Notifications.date,Notifications.is_read).filter(Notifications.is_read==False)
+    r3 = q3.all()
+    for row in r3:
+        i=i+1
+
+    return i
 @notification_router.get("/Notifications_not_read")
 async def read_data_count(user_id: int = Depends(recupere_userid), user: User = Depends(check_superviseurpermissions)):
     Session = sessionmaker(bind=con)
