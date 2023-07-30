@@ -13,7 +13,7 @@ from schemas.etudiermat import Etudiermat
 
 etudiermat_router=APIRouter()
 @etudiermat_router.get("/matiere/{nom}")
-async def matiere_id(nom:str):
+async def matiere_id(nom:str,user: User = Depends(check_Adminpermissions)):
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()
@@ -27,7 +27,7 @@ async def matiere_id(nom:str):
         id=matiere.id   
     return id
 @etudiermat_router.get("/")
-async def read_data():
+async def read_data(user: User = Depends(check_Adminpermissions)):
     query =etudiermats.select()
     result_proxy = con.execute(query)   
     results = []
@@ -43,7 +43,7 @@ async def read_data():
     # return con.execute(etudiermats.select().fetchall())
 
 @etudiermat_router.get("/{id}")
-async def read_data_by_id(id:int,):
+async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
     query =etudiermats.select().where(etudiermats.c.id==id)
     result_proxy = con.execute(query)   
     results = []
@@ -58,7 +58,7 @@ async def read_data_by_id(id:int,):
 
 
 @etudiermat_router.post("/")
-async def write_data(etudiermat:Etudiermat,):
+async def write_data(etudiermat:Etudiermat,user: User = Depends(check_Adminpermissions)):
 
     con.execute(etudiermats.insert().values(
 
@@ -70,7 +70,7 @@ async def write_data(etudiermat:Etudiermat,):
 
 
 @etudiermat_router.put("/{id}")
-async def update_data(id:int,etudiermat:Etudiermat,):
+async def update_data(id:int,etudiermat:Etudiermat,user: User = Depends(check_Adminpermissions)):
     con.execute(etudiermats.update().values(
         id_etu=etudiermat.id_etu,
         id_mat=etudiermat.id_mat,
@@ -78,6 +78,6 @@ async def update_data(id:int,etudiermat:Etudiermat,):
     return await read_data()
 
 @etudiermat_router.delete("/{id}")
-async def delete_data(id:int,):
+async def delete_data(id:int,user: User = Depends(check_Adminpermissions)):
     con.execute(etudiermats.delete().where(etudiermats.c.id==id))
     return await read_data()

@@ -8,7 +8,7 @@ from sqlalchemy.orm import selectinload,joinedload,sessionmaker
 filiere_router=APIRouter()
 
 @filiere_router.get("/filiere_departement")
-async def filiere_departement_data():
+async def filiere_departement_data(user: User = Depends(check_Adminpermissions)):
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()
@@ -31,7 +31,7 @@ async def filiere_departement_data():
 
     return results
 @filiere_router.get("/nomfiliere")
-async def read_data():
+async def read_data(user: User = Depends(check_Adminpermissions)):
     query = Filieres.__table__.select()
     result_proxy = con.execute(query)   
     results = []
@@ -41,7 +41,7 @@ async def read_data():
     
     return results
 @filiere_router.get("/{nom}")
-async def departement_id(nom:str):
+async def departement_id(nom:str,user: User = Depends(check_Adminpermissions)):
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()
@@ -68,7 +68,7 @@ async def departement_id(nom:str):
     
 #     return results
 @filiere_router.get("/")
-async def read_data():
+async def read_data(user: User = Depends(check_Adminpermissions)):
     query = Filieres.__table__.select()
     result_proxy = con.execute(query)   
     results = []
@@ -85,7 +85,7 @@ async def read_data():
     # return con.execute(Filieres.__table__.select().fetchall())
 
 @filiere_router.get("/{id}")
-async def read_data_by_id(id:int,):
+async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
     query = Filieres.__table__.select().where(Filieres.__table__.c.id==id)
     result_proxy = con.execute(query)   
     results = []
