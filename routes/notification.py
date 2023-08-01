@@ -1,5 +1,5 @@
 from fastapi import APIRouter,Depends
-from auth.authConfig import recupere_userid,create_user,Surveillant,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
+from auth.authConfig import recupere_userid,create_user,Surveillant,UserResponse,UserCreate,check_permissions,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
 from config.db import con
 from models.notification import Notifications
 from models.notification import Superviseurs
@@ -9,7 +9,7 @@ from sqlalchemy import func
 
 notification_router=APIRouter()
 @notification_router.get("/")
-async def read_data(user_id: int = Depends(recupere_userid),user: User = Depends(check_superviseurpermissions)):
+async def read_data(user_id: int = Depends(recupere_userid),user: User = Depends(check_permissions)):
     Session = sessionmaker(bind=con)
     session = Session()
     q3 = session.query(Notifications.content,Notifications.date).join(Superviseurs).filter(Superviseurs.user_id == user_id)
@@ -24,7 +24,7 @@ async def read_data(user_id: int = Depends(recupere_userid),user: User = Depends
         results.append(result) 
     return results
 @notification_router.get("/notifications")
-async def read_data(user: User = Depends(check_superviseurpermissions)):
+async def read_data(user: User = Depends(check_permissions)):
     #user: User = Depends(check_superviseurpermissions
     Session = sessionmaker(bind=con)
     session = Session()
@@ -42,7 +42,7 @@ async def read_data(user: User = Depends(check_superviseurpermissions)):
         results.append(result) 
     return results
 @notification_router.get("/Notifications_not_read")
-async def read_data_count(user_id: int = Depends(recupere_userid), user: User = Depends(check_superviseurpermissions)):
+async def read_data_count(user_id: int = Depends(recupere_userid), user: User = Depends(check_permissions)):
     Session = sessionmaker(bind=con)
     session = Session()
     q3 = session.query(func.count()).filter(Notifications.is_read == False).scalar()
