@@ -14,7 +14,9 @@ async def read_data():
     result_proxy = con.execute(query)   
     results = []
     for row in result_proxy:
-        result = {"nom": row.nom,
+        result = {
+                  "id": row.id,
+                  "nom": row.nom,
                   "prenom": row.prenom,
                   "photo": row.photo,
                   "genre": row.genre,
