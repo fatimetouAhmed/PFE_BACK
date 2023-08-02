@@ -42,7 +42,7 @@ semestre_etudiant_router=APIRouter()
 
 #     return results
 @semestre_etudiant_router.get("/")
-async def read_data():
+async def read_data(user: User = Depends(check_Adminpermissions)):
     query =semestre_etudiants.select()
     result_proxy = con.execute(query)   
     results = []
@@ -58,7 +58,7 @@ async def read_data():
     # return con.execute(semestre_etudiants.select().fetchall())
 
 @semestre_etudiant_router.get("/{id}")
-async def read_data_by_id(id:int,):
+async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
     query =semestre_etudiants.select().where(semestre_etudiants.c.id==id)
     result_proxy = con.execute(query)   
     results = []
@@ -71,7 +71,7 @@ async def read_data_by_id(id:int,):
     return results
     # return con.execute(semestre_etudiants.select().where(semestre_etudiants.c.id==id)).fetchall()
 @semestre_etudiant_router.get("/etudiant/{nom}")
-async def etudiant_id(nom:str):
+async def etudiant_id(nom:str,user: User = Depends(check_Adminpermissions)):
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()
@@ -86,7 +86,7 @@ async def etudiant_id(nom:str):
     return id
 
 @semestre_etudiant_router.get("/semestre/{nom}")
-async def semestre_id(nom:str):
+async def semestre_id(nom:str,user: User = Depends(check_Adminpermissions)):
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()
@@ -99,7 +99,7 @@ async def semestre_id(nom:str):
         id=semestre.id   
     return id
 @semestre_etudiant_router.post("/")
-async def write_data(semestre_etudiant:Semestre_etudiant,):
+async def write_data(semestre_etudiant:Semestre_etudiant,user: User = Depends(check_Adminpermissions)):
 
     con.execute(semestre_etudiants.insert().values(
 
@@ -111,7 +111,7 @@ async def write_data(semestre_etudiant:Semestre_etudiant,):
 
 
 @semestre_etudiant_router.put("/{id}")
-async def update_data(id:int,semestre_etudiant:Semestre_etudiant,):
+async def update_data(id:int,semestre_etudiant:Semestre_etudiant,user: User = Depends(check_Adminpermissions)):
     con.execute(semestre_etudiants.update().values(
         id_etu=semestre_etudiant.id_etu,
         id_sem=semestre_etudiant.id_sem,
@@ -119,6 +119,6 @@ async def update_data(id:int,semestre_etudiant:Semestre_etudiant,):
     return await read_data()
 
 @semestre_etudiant_router.delete("/{id}")
-async def delete_data(id:int,):
+async def delete_data(id:int,user: User = Depends(check_Adminpermissions)):
     con.execute(semestre_etudiants.delete().where(semestre_etudiants.c.id==id))
     return await read_data()

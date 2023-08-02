@@ -30,7 +30,7 @@ async def semestre_filiere_data():
 
     return results
 @semestre_router.get("/{nom}")
-async def filiere_id(nom:str):
+async def filiere_id(nom:str,user: User = Depends(check_Adminpermissions)):
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()
@@ -45,7 +45,7 @@ async def filiere_id(nom:str):
     
     return id
 @semestre_router.get("/")
-async def read_data():
+async def read_data(user: User = Depends(check_Adminpermissions)):
     query = Semestre.__table__.select()
     result_proxy = con.execute(query)   
     results = []
@@ -65,7 +65,7 @@ async def read_data():
     
     return results
 @semestre_router.get("/{nom}")
-async def filiere_id(nom:str):
+async def filiere_id(nom:str,user: User = Depends(check_Adminpermissions)):
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()
@@ -81,7 +81,7 @@ async def filiere_id(nom:str):
     return id
     # return con.execute(semestres.select().fetchall())
 @semestre_router.get("/etudiants_semestres")
-async def semestres_etudiants_data():
+async def semestres_etudiants_data(user: User = Depends(check_Adminpermissions)):
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()
@@ -115,7 +115,7 @@ async def semestres_etudiants_data():
 
     return results
 @semestre_router.get("/{id}")
-async def read_data_by_id(id:int,):
+async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
     query = Semestre.__table__.select().where(Semestre.__table__.c.id==id)
     result_proxy = con.execute(query)   
     results = []
@@ -128,7 +128,7 @@ async def read_data_by_id(id:int,):
     # return con.execute(semestres.select().where(semestres.c.id==id)).fetchall()
 
 @semestre_router.post("/")
-async def write_data(semestre:SemestreBase,):
+async def write_data(semestre:SemestreBase,user: User = Depends(check_Adminpermissions)):
     print("nom",semestre.nom)
     con.execute(Semestre.__table__.insert().values(
         nom=semestre.nom,
@@ -137,7 +137,7 @@ async def write_data(semestre:SemestreBase,):
     return await read_data()
 
 @semestre_router.put("/{id}")
-async def update_data(id:int,semestre:SemestreBase,):
+async def update_data(id:int,semestre:SemestreBase,user: User = Depends(check_Adminpermissions)):
     con.execute(Semestre.__table__.update().values(
         nom=semestre.nom,
         id_fil=semestre.id_fil
@@ -145,6 +145,6 @@ async def update_data(id:int,semestre:SemestreBase,):
     return await read_data()
 
 @semestre_router.delete("/{id}")
-async def delete_data(id:int,):
+async def delete_data(id:int,user: User = Depends(check_Adminpermissions)):
     con.execute(Semestre.__table__.delete().where(Semestre.__table__.c.id==id))
     return await read_data()

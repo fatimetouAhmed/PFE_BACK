@@ -41,7 +41,7 @@ async def matiere_id(nom:str):
         id=matiere.id   
     return id
 @examun_router.get("/")
-async def read_data():
+async def read_data(user: User = Depends(check_Adminpermissions)):
     query =examuns.select()
     result_proxy = con.execute(query)   
     results = []
@@ -60,7 +60,7 @@ async def read_data():
     # return con.execute(examuns.select().fetchall())
 
 @examun_router.get("/{id}")
-async def read_data_by_id(id:int,):
+async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
     query =examuns.select().where(examuns.c.id==id)
     result_proxy = con.execute(query)   
     results = []
@@ -78,7 +78,7 @@ async def read_data_by_id(id:int,):
 
 
 @examun_router.post("/")
-async def write_data(examun:Examun,):
+async def write_data(examun:Examun,user: User = Depends(check_Adminpermissions)):
 
     con.execute(examuns.insert().values(
         type=examun.type,
@@ -92,7 +92,7 @@ async def write_data(examun:Examun,):
 
 
 @examun_router.put("/{id}")
-async def update_data(id:int,examun:Examun,):
+async def update_data(id:int,examun:Examun,user: User = Depends(check_Adminpermissions)):
     con.execute(examuns.update().values(
         type=examun.type,
         heure_deb=examun.heure_deb,
@@ -103,6 +103,6 @@ async def update_data(id:int,examun:Examun,):
     return await read_data()
 
 @examun_router.delete("/{id}")
-async def delete_data(id:int,):
+async def delete_data(id:int,user: User = Depends(check_Adminpermissions)):
     con.execute(examuns.delete().where(examuns.c.id==id))
     return await read_data()

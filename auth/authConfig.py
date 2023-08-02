@@ -234,7 +234,14 @@ def check_superviseurpermissions(user: User = Depends(get_current_user)):
             detail="Insufficient permissions",
         )
     return user
-
+def check_permissions(user: User = Depends(get_current_user)):
+    #if user.role != "superviseur":
+    if user.role not in ["admin", "superviseur"]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Insufficient permissions",
+        )
+    return user
 def recupere_user(user: User= Depends(get_current_user)):
 
       user_data = {
