@@ -5,7 +5,7 @@ from models.departement import Departements
 from schemas.departement import Departement
 departement_router=APIRouter()
 @departement_router.get("/")
-async def read_data(user: User = Depends(check_Adminpermissions)):
+async def read_data():
     query = Departements.__table__.select()
     result_proxy = con.execute(query)   
     results = []

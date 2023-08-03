@@ -18,13 +18,15 @@ async def read_data(user_id: int = Depends(recupere_userid),user: User = Depends
     for row in r3:
 
         result = {
-            "content": row[0],
-             "date": row[1],
+            "id": row[0],
+            "content": row[1],
+             "date": row[2],
+            "is_read": row[3],
         }
         results.append(result) 
     return results
 @notification_router.get("/notifications")
-async def read_data(user: User = Depends(check_permissions)):
+async def read_data():
     #user: User = Depends(check_superviseurpermissions
     Session = sessionmaker(bind=con)
     session = Session()

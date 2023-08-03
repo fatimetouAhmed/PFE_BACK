@@ -223,10 +223,16 @@ async def write_data(user_id: int = Depends(recupere_userid),user: User = Depend
     for row in r5:
         id_super =row[0]
     print("supervieur",id_super)
+    if salle and matiere_examun:
+        description = "Attention, quelqu'un n'est pas reconnu par l'application, et cette personne essaie d'entrer dans " + str(salle[0]["libelle"]) +" pour passer l'examen "\
+            + str(salle[0]["type"]) + " dans la matière " + \
+                        str(matiere_examun[0]["libelle"]) + " au moment "+ str(date) + ", le surveillant "+ str(surveillant) +" de la salle N°" + str(id_sal)
+    else:
+        description = "Some default description when data is unavailable"
 
-    description = "Attention, quelqu'un n'est pas reconnu par l'application, et cette personne essaie d'entrer dans " + str(salle[0]["libelle"]) +" pour passer l'examen "\
-        + str(salle[0]["type"]) + " dans la matière " + \
-                    str(matiere_examun[0]["libelle"]) + " au moment "+ str(date) + ", le surveillant "+ str(surveillant) +" de la salle N°" + str(id_sal)
+    # description = "Attention, quelqu'un n'est pas reconnu par l'application, et cette personne essaie d'entrer dans " + str(salle[0]["libelle"]) +" pour passer l'examen "\
+    #     + str(salle[0]["type"]) + " dans la matière " + \
+    #                 str(matiere_examun[0]["libelle"]) + " au moment "+ str(date) + ", le surveillant "+ str(surveillant) +" de la salle N°" + str(id_sal)
 
     con.execute(Historiques.__table__.insert().values(
         description=description,

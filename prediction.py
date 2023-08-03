@@ -28,8 +28,8 @@ models = [
 
 async def predict_face(image_path,user_id: int = Depends(recupere_userid),user: User = Depends(check_survpermissions)):
   #  try:     
-    #result = DeepFace.verify(image_path, img2_path = "image.jpg")
-        results = DeepFace.find(img_path =image_path, db_path = "C:/Users/hp/Desktop/PFE/PFE_back/PFE_BACK/image",model_name=models[1],enforce_detection=False)
+    #result = DeepFace.verify(image_path, img2_path = "image.jpg")C:\Users\pc\Desktop\PFE\curd_fastapi\image
+        results = DeepFace.find(img_path =image_path, db_path = "C:/Users/pc/Desktop/PFE/curd_fastapi/image",model_name=models[1],enforce_detection=False)
         try:  #if  results
           print ("resultats",results)
           photo = list(map(lambda x: x['identity'],results))

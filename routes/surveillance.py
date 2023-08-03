@@ -60,7 +60,6 @@ async def read_data(user_id: int = Depends(recupere_userid), user: User = Depend
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()
-
     query = session.query(Surveillant.user_id).join(Superviseur).filter(Surveillant.superviseur_id == user_id).all()
 
     ids = [row[0] for row in query]  # Extract the list of IDs from the query results

@@ -30,6 +30,8 @@ from routes.notification import notification_router
 from routes.filiere import filiere_router
 from routes.semestre import semestre_router
 from routes.etudiant import etudiant_router
+from routes.filieresmatieres import filieresmatieres_router
+from routes.departementssuperviseurs import departementssuperviseurs_router
 from routes.matiere import matiere_router
 from routes.etudiermat import etudiermat_router
 from routes.semestre_etudiant import semestre_etudiant_router
@@ -71,6 +73,12 @@ app.add_middleware(
 
 # Définir les routes pour l'ensemble d'itinéraires etudiant
 app.include_router(etudiant_router, prefix="/etudiants", tags=["Etudiants"])
+
+# Définir les routes pour l'ensemble d'itinéraires departementssuperviseurs
+app.include_router(departementssuperviseurs_router, prefix="/departementssuperviseurs", tags=["Departementssuperviseurs"])
+
+# Définir les routes pour l'ensemble d'itinéraires filieresmatieres
+app.include_router(filieresmatieres_router, prefix="/filieresmatieres", tags=["Filieresmatieres"])
 
 # Définir les routes pour l'ensemble d'itinéraires matiere
 app.include_router(matiere_router, prefix="/matieres", tags=["Matieres"])
@@ -230,5 +238,5 @@ def logout(access_token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=401, detail="Token d'authentification invalide")
 
 if __name__ == "__main__":
-    uvicorn.run(app, port=8000, host='127.0.0.1')
-   #192.168.55.113
+    uvicorn.run(app, port=8000, host='192.168.186.113')
+   #192.168.186.113
