@@ -14,7 +14,7 @@ from sqlalchemy.sql import func
 
 filieresmatieres_router=APIRouter()
 @filieresmatieres_router.get("/read")
-def get_filieresmatieres_data():
+def get_filieresmatieres_data(user: User = Depends(check_superviseurpermissions)):
     Session = sessionmaker(bind=con)
     session = Session()
     query = select(filieresmatieres.c.id,
@@ -32,7 +32,21 @@ def get_filieresmatieres_data():
                        'matiere_libelle': row.libelle, 
                        'filiere_nom': row.nom} for row in result]
     return formatted_data
+@filieresmatieres_router.get("/{id}")
+def get_filieresmatieres_data(id:int,user: User = Depends(check_superviseurpermissions)):
+    Session = sessionmaker(bind=con)
+    session = Session()
+    query = select(filieresmatieres.c.id,
+                   filieresmatieres.c.id_mat,
+                   Matiere.libelle,). \
+        join(Matiere, Matiere.id == filieresmatieres.c.id_mat). \
+        join(Filieres, Filieres.id == filieresmatieres.c.id_fil).filter(Filieres.id==id)
 
+    result = session.execute(query).fetchall()
+    formatted_data = [{'id': row.id,
+                       'id_mat': row.id_mat,
+                       'matieres': row.libelle,} for row in result]
+    return formatted_data
 # Utilisation de la fonction pour afficher les données
 # data = get_filieresmatieres_data()
 # for row in data:
@@ -53,19 +67,19 @@ async def read_data(user: User = Depends(check_Adminpermissions)):
     return results
     # return con.execute(filieresmatieres.select().fetchall())
 
-@filieresmatieres_router.get("/{id}")
-async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
-    query =filieresmatieres.select().where(filieresmatieres.c.id==id)
-    result_proxy = con.execute(query)   
-    results = []
-    for row in result_proxy:
-        result = {
-                  "id_mat": row.id_mat,
-                  "id_fil": row.id_fil,}   # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
-        results.append(result)
+# @filieresmatieres_router.get("/{id}")
+# async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
+#     query =filieresmatieres.select().where(filieresmatieres.c.id==id)
+#     result_proxy = con.execute(query)   
+#     results = []
+#     for row in result_proxy:
+#         result = {
+#                   "id_mat": row.id_mat,
+#                   "id_fil": row.id_fil,}   # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
+#         results.append(result)
     
-    return results
-    # return con.execute(filieresmatieres.select().where(filieresmatieres.c.id==id)).fetchall()
+#     return results
+#     # return con.execute(filieresmatieres.select().where(filieresmatieres.c.id==id)).fetchall()
 
 
 @filieresmatieres_router.post("/")

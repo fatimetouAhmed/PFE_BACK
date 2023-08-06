@@ -3,4 +3,5 @@ from datetime import datetime
 class DepartementsSuperviseurs(BaseModel):
    id_sup:int
    id_dep:int
-   date:datetime
+   date_debut:datetime
+   date_fin:datetime

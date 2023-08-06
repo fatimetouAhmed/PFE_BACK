@@ -10,13 +10,14 @@ departementssuperviseurs = Table(
     Column('id', Integer, primary_key=True),
     Column('id_sup', Integer, ForeignKey('superviseurs.user_id'),primary_key=True),
     Column('id_dep', Integer, ForeignKey('departements.id'),primary_key=True),
-    Column('date', DateTime,primary_key=True),
+    Column('date_debut', DateTime,primary_key=True),
+    Column('date_fin', DateTime,primary_key=True),
 )
 
 class Superviseur(Base):
     __tablename__ = "superviseurs"
 
-    user_id = Column(Integer, ForeignKey("users.id"), primary_key=True) 
+    user_id = Column(Integer, primary_key=True) 
     departements = relationship('Departements', secondary=departementssuperviseurs, backref='departements')
 
 class Departements(Base):

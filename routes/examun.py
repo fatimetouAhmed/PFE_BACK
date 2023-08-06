@@ -60,12 +60,13 @@ async def read_data(user: User = Depends(check_Adminpermissions)):
     # return con.execute(examuns.select().fetchall())
 
 @examun_router.get("/{id}")
-async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
-    query =examuns.select().where(examuns.c.id==id)
+async def read_data_by_id(id:int,user: User = Depends(check_superviseurpermissions)):
+    query =examuns.select().where(examuns.c.id_mat==id)
     result_proxy = con.execute(query)   
     results = []
     for row in result_proxy:
         result = {
+                  "id": row.id,
                   "type": row.type,
                   "heure_deb": row.heure_deb,
                   "heure_fin": row.heure_fin,
