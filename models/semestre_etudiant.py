@@ -33,4 +33,6 @@ class Semestres(Base):
     id = Column(Integer, primary_key=True)
     nom = Column(String(250))
     id_fil = Column(Integer,ForeignKey('filiere.id'))
+    date_debut=Column(DateTime)
+    date_fin=Column(DateTime)
     semestres_etudiants = relationship('Etudiants', secondary=semestre_etudiants, backref='semestres_etudiants')

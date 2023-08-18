@@ -1,4 +1,4 @@
-from sqlalchemy import Table,Column,String,Integer,ForeignKey
+from sqlalchemy import Table,Column,String,Integer,DateTime,ForeignKey
 from config.db import meta
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -9,7 +9,8 @@ class Semestre(Base):
     id = Column(Integer, primary_key=True)
     nom = Column(String(255))
     id_fil = Column(Integer, ForeignKey('filieres.id'))
-
+    date_debut=Column(DateTime)
+    date_fin=Column(DateTime)
     filieres = relationship("Filieres", primaryjoin="Semestre.id_fil == Filieres.id")
     filieres = relationship("Filieres")
     

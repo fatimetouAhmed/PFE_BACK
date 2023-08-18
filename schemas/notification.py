@@ -5,3 +5,4 @@ class Notification(BaseModel):
    content:str
    date:datetime
    is_read:bool
+   

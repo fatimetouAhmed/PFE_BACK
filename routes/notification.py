@@ -25,12 +25,12 @@ async def read_data(user_id: int = Depends(recupere_userid),user: User = Depends
         }
         results.append(result) 
     return results
-@notification_router.get("/notifications")
-async def read_data():
+@notification_router.get("/{id}")
+async def read_data_by_examun(id):
     #user: User = Depends(check_superviseurpermissions
     Session = sessionmaker(bind=con)
     session = Session()
-    q3 = session.query(Notifications.id,Notifications.content,Notifications.date,Notifications.is_read).filter(Notifications.is_read==False)
+    q3 = session.query(Notifications.id,Notifications.content,Notifications.date,Notifications.is_read,Notifications.image).filter(Notifications.is_read==False and Notifications.id_exam==id)
     r3 = q3.all()
     results = []
     for row in r3:
@@ -40,6 +40,7 @@ async def read_data():
             "content": row[1],
              "date": row[2],
              "is_read": row[3],
+             "image": row[4],
         }
         results.append(result) 
     return results

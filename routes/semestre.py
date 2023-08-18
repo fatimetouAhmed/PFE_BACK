@@ -1,5 +1,5 @@
 from fastapi import APIRouter,Depends
-from auth.authConfig import create_user,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
+from auth.authConfig import create_user,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_permissions,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
 from config.db import con
 from models.semestre import Semestre
 from schemas.semestre import SemestreBase
@@ -23,8 +23,9 @@ async def semestre_filiere_data():
             "id":semestre.id,
             "nom": semestre.nom,
             "id_fil":semestre.id_fil,
+            "date_debut": semestre.date_debut,
+            "date_fin": semestre.date_fin,
             "filiere": semestre.filieres.nom,
-         
         }
         results.append(result)
 
@@ -50,7 +51,9 @@ async def read_data(user: User = Depends(check_Adminpermissions)):
     result_proxy = con.execute(query)   
     results = []
     for row in result_proxy:
-        result = {"nom": row.nom,}  # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
+        result = {"nom": row.nom,
+                  "date_debut": row.date_debut,
+                  "date_fin": row.date_fin}  # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
         results.append(result)
     
     return results
@@ -114,25 +117,51 @@ async def semestres_etudiants_data(user: User = Depends(check_Adminpermissions))
         results.append(result)
 
     return results
-@semestre_router.get("/{id}")
-async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
-    query = Semestre.__table__.select().where(Semestre.__table__.c.id==id)
-    result_proxy = con.execute(query)   
+@semestre_router.get("/semestre/{id}")
+async def semestre_filiere_data_by_id_fil(id:int,user: User = Depends(check_permissions)):
+    # Créer une session
+    Session = sessionmaker(bind=con)
+    session = Session()
+
+    # Effectuer la requête pour récupérer les filières avec leurs départements
+    semestres = session.query(Semestre).join(Semestre.filieres).filter(Semestre.id_fil == id).all()
+
+
+    # Parcourir les filières et récupérer leurs départements associés
     results = []
-    for row in result_proxy:
-        result = {"nom": row.nom,
-                  "id_fil": row.id_fil}  # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
+    for semestre in semestres:
+        result = {
+                  "id": semestre.id,
+                  "nom": semestre.nom,
+                  "id_fil":semestre.id_fil,
+                  "date_debut": semestre.date_debut,
+                  "date_fin": semestre.date_fin
+           
+        }
         results.append(result)
-    
+
     return results
-    # return con.execute(semestres.select().where(semestres.c.id==id)).fetchall()
+# @semestre_router.get("/{id}")
+# async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
+#     query = Semestre.__table__.select().where(Semestre.__table__.c.id==id)
+#     result_proxy = con.execute(query)   
+#     results = []
+#     for row in result_proxy:
+#         result = {"nom": row.nom,
+#                   "id_fil": row.id_fil}  # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
+#         results.append(result)
+    
+#     return results
+#     # return con.execute(semestres.select().where(semestres.c.id==id)).fetchall()
 
 @semestre_router.post("/")
 async def write_data(semestre:SemestreBase,user: User = Depends(check_Adminpermissions)):
     print("nom",semestre.nom)
     con.execute(Semestre.__table__.insert().values(
         nom=semestre.nom,
-        id_fil=semestre.id_fil
+        id_fil=semestre.id_fil,
+        date_debut=semestre.date_debut,
+        date_fin=semestre.date_fin
         ))
     return await read_data()
 
@@ -140,7 +169,9 @@ async def write_data(semestre:SemestreBase,user: User = Depends(check_Adminpermi
 async def update_data(id:int,semestre:SemestreBase,user: User = Depends(check_Adminpermissions)):
     con.execute(Semestre.__table__.update().values(
         nom=semestre.nom,
-        id_fil=semestre.id_fil
+        id_fil=semestre.id_fil,
+        date_debut=semestre.date_debut,
+        date_fin=semestre.date_fin
     ).where(Semestre.__table__.c.id==id))
     return await read_data()
 

@@ -1,7 +1,7 @@
 from sqlalchemy import select, join, alias
 from sqlalchemy.orm import selectinload,joinedload,sessionmaker
 from fastapi import APIRouter,Depends
-from auth.authConfig import create_user,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
+from auth.authConfig import create_user,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_permissions,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
 from config.db import con
 from models.examun import examuns
 from models.examun import Salle,Matieres
@@ -60,7 +60,7 @@ async def read_data(user: User = Depends(check_Adminpermissions)):
     # return con.execute(examuns.select().fetchall())
 
 @examun_router.get("/{id}")
-async def read_data_by_id(id:int,user: User = Depends(check_superviseurpermissions)):
+async def read_data_by_id(id:int,user: User = Depends(check_permissions)):
     query =examuns.select().where(examuns.c.id_mat==id)
     result_proxy = con.execute(query)   
     results = []

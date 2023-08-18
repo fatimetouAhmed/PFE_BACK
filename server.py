@@ -30,7 +30,7 @@ from routes.notification import notification_router
 from routes.filiere import filiere_router
 from routes.semestre import semestre_router
 from routes.etudiant import etudiant_router
-from routes.filieresmatieres import filieresmatieres_router
+from routes.semestresmatieres import semestresmatieres_router
 from routes.departementssuperviseurs import departementssuperviseurs_router
 from routes.matiere import matiere_router
 from routes.etudiermat import etudiermat_router
@@ -77,8 +77,8 @@ app.include_router(etudiant_router, prefix="/etudiants", tags=["Etudiants"])
 # Définir les routes pour l'ensemble d'itinéraires departementssuperviseurs
 app.include_router(departementssuperviseurs_router, prefix="/departementssuperviseurs", tags=["Departementssuperviseurs"])
 
-# Définir les routes pour l'ensemble d'itinéraires filieresmatieres
-app.include_router(filieresmatieres_router, prefix="/filieresmatieres", tags=["Filieresmatieres"])
+# Définir les routes pour l'ensemble d'itinéraires semestresmatieres
+app.include_router(semestresmatieres_router, prefix="/semestresmatieres", tags=["Semestresmatieres"])
 
 # Définir les routes pour l'ensemble d'itinéraires matiere
 app.include_router(matiere_router, prefix="/matieres", tags=["Matieres"])

@@ -13,7 +13,7 @@ from models.surveillance import Surveillants
 from models.salle import salles
 from models.surveillance import Surveillants  
 from schemas.historique import Historique
-from models.notification import Notifications
+from models.historique import Notifications
 from sqlalchemy.orm import selectinload,joinedload,sessionmaker
 from sqlalchemy import select, literal_column,column
 from datetime import datetime

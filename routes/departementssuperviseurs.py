@@ -12,6 +12,24 @@ from schemas.departementssuperviseurs import DepartementsSuperviseurs
 
 
 departementssuperviseurs_router=APIRouter()
+@departementssuperviseurs_router.get("/read")
+def get_filieresmatieres_data(user: User = Depends(check_Adminpermissions)):
+    Session = sessionmaker(bind=con)
+    session = Session()
+    # query = select(departementssuperviseurs.c.id,
+    #                departementssuperviseurs.c.id_sup,
+    #                 departementssuperviseurs.c.id_dep,
+    #                departementssuperviseurs.c.date_debut,
+    #                departementssuperviseurs.c.date_fin,
+    #                Departements.nom)
+
+    # result = session.execute(query).fetchall()
+    query =Departements.__table__.select()
+    result = con.execute(query)  
+    formatted_data = [{'id': row.id,
+                       'departement': row.nom, 
+                       } for row in result]
+    return formatted_data
 @departementssuperviseurs_router.get("/read/{id}")
 def get_filieresmatieres_data(id:int,user: User = Depends(check_superviseurpermissions)):
     Session = sessionmaker(bind=con)
