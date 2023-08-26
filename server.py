@@ -1,4 +1,4 @@
-from fastapi import FastAPI, File, UploadFile,HTTPException,Header,status,Depends,APIRouter
+from fastapi import FastAPI, File, UploadFile,HTTPException,Header,status,Depends,APIRouter,Form
 import uvicorn
 #from prediction import read_image
 from starlette.responses import JSONResponse
@@ -14,6 +14,9 @@ from passlib.context import CryptContext
 import datetime
 from auth.authConfig import recupere_userid,create_user,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
 import redis
+from fastapi import FastAPI, File, UploadFile
+from fastapi.responses import JSONResponse
+from pathlib import Path
 #auuth
 #from fastapi import FastAPI, HTTPException, status
 from datetime import datetime, timedelta
@@ -151,21 +154,40 @@ def surv_route(user: User = Depends(check_survpermissions)):
 def hello_world():
     return "hello world"
 
+UPLOAD_FOLDER = Path("C:/Users/pc/Desktop/PFE/curd_fastapi/image")
+UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
+
+@app.post("/upload/")
+async def upload_image(file: UploadFile = File(...)):
+    try:
+        # Obtenir l'extension du fichier
+        file_extension = file.filename.split(".")[-1]
+        # Générer un nom de fichier unique
+        file_name = f"{Path(file.filename).stem}_{hash(file.filename)}.{file_extension}"
+        # Construire le chemin pour enregistrer le fichier
+        file_path = UPLOAD_FOLDER / file_name
+        file_path_str = str(file_path).replace("\\", "/")
+        print(file_path_str)
+
+        # Enregistrer le fichier
+        with open(file_path, "wb") as f:
+            f.write(file.file.read())
+        
+        return JSONResponse(content={"message": "Fichier téléversé avec succès"}, status_code=200)
+    except Exception as e:
+        return JSONResponse(content={"message": "Une erreur est survenue", "error": str(e)}, status_code=500)
 
 @app.post('/api/predict')
-async def predict_image(file :UploadFile=File(...),user_id: int = Depends(recupere_userid),user: User = Depends(check_survpermissions)):
-# async def predict_image(file :UploadFile=File(...)):
-    #read file upload par user
-    #image = read_image(file)
-    #try:
+async def predict_image(file: UploadFile = File(...), user_id: int = Depends(recupere_userid), user: User = Depends(check_survpermissions)):
+    try:
         image = await file.read()
         with open("image.jpg", "wb") as f:
             f.write(image)
-        result = await predict_face("image.jpg",user_id,user)
-        #JSONResponse(content=result)
-    #except Exception as e:
-       # return {"error": str(e)}
-        return result 
+        result = await predict_face("image.jpg", user_id, user)
+        return result
+    except Exception as e:
+        return {"error": str(e)}
+
 
 
 
@@ -215,6 +237,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 
 blacklisted_tokens = set()
 
+    
 @app.post("/logout/")
 def logout(access_token: str = Depends(oauth2_scheme)):
     try:
@@ -238,5 +261,6 @@ def logout(access_token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=401, detail="Token d'authentification invalide")
 
 if __name__ == "__main__":
-    uvicorn.run(app, port=8000, host='192.168.186.113')
-   #192.168.186.113
+    uvicorn.run(app, port=8000, host='127.0.0.1')
+ 
+# 192.168.53.113

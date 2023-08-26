@@ -1,11 +1,14 @@
-from fastapi import APIRouter,Depends
+from fastapi import APIRouter,Depends,Form
 from auth.authConfig import create_user,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
 from config.db import con
 from schemas.etudiant import EtudiantBase
-# from models.etudiant import Etudiant
 from sqlalchemy.orm import selectinload,joinedload,sessionmaker
 from models.etudiermat import Etudiant
 from models.semestre_etudiant import Etudiants
+from fastapi import FastAPI, File, UploadFile
+from fastapi.responses import JSONResponse
+from pathlib import Path
+from datetime import datetime
 etudiant_router=APIRouter()
 
 @etudiant_router.get("/")
@@ -132,23 +135,68 @@ async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
     return results
     # return con.execute(Etudiant.select().where(Etudiant.c.id==id)).fetchall()
 
-
+UPLOAD_FOLDER = Path("C:/Users/pc/Desktop/PFE/curd_fastapi/image")
+UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
 @etudiant_router.post("/")
-async def write_data(etudiants:EtudiantBase,user: User = Depends(check_Adminpermissions)):
+async def write_data(id: int= Form(...),nom: str= Form(...),
+    prenom: str= Form(...),
+    genre: str= Form(...),
+    date_N: datetime= Form(...),
+    lieu_n: str= Form(...),
+    email: str= Form(...),
+    telephone: int = Form(...),
+    nationalite: str = Form(...),
+    date_inscription: datetime = Form(...), user: User = Depends(check_Adminpermissions),file: UploadFile = File(...)):
+    try:
+        # Obtenir l'extension du fichier
+        file_extension = file.filename.split(".")[-1]
+        # Générer un nom de fichier unique
+        file_name = f"{Path(file.filename).stem}_{hash(file.filename)}.{file_extension}"
+        # Construire le chemin pour enregistrer le fichier
+        file_path = UPLOAD_FOLDER / file_name
+        file_path_str = str(file_path).replace("\\", "/")
+        print(file_path_str)
 
-    con.execute(Etudiant.__table__.insert().values(
-        nom=etudiants.nom,
-        prenom=etudiants.prenom,
-        photo=etudiants.photo,
-        genre=etudiants.genre,
-        date_N=etudiants.date_N,
-        lieu_n=etudiants.lieu_n,
-        email=etudiants.email,
-        telephone=etudiants.telephone,
-        nationalite=etudiants.nationalite,       
-        date_insecription=etudiants.date_insecription,
+        # Enregistrer le fichier
+        with open(file_path, "wb") as f:
+            f.write(file.file.read())
+        
+        con.execute(Etudiant.__table__.insert().values(
+            nom=nom,
+            prenom=prenom,
+            photo=str(file_path_str),  # Utilisation directe de file_path_str
+            genre=genre,
+            date_N=date_N,
+            lieu_n=lieu_n,
+            email=email,
+            telephone=telephone,
+            nationalite=nationalite,       
+            date_insecription=date_inscription,
         ))
-    return await read_data()
+        return await read_data()
+    except Exception as e:
+        return JSONResponse(content={"message": "Une erreur est survenue", "error": str(e)}, status_code=500)
+
+# @etudiant_router.post("/")
+# async def write_data(file: UploadFile = File(...)):
+#     try:
+#         # Obtenir l'extension du fichier
+#         file_extension = file.filename.split(".")[-1]
+#         # Générer un nom de fichier unique
+#         file_name = f"{Path(file.filename).stem}_{hash(file.filename)}.{file_extension}"
+#         # Construire le chemin pour enregistrer le fichier
+#         file_path = UPLOAD_FOLDER / file_name
+#         file_path_str = str(file_path).replace("\\", "/")
+#         print(file_path_str)
+
+#         # Enregistrer le fichier
+#         with open(file_path, "wb") as f:
+#             f.write(file.file.read())
+        
+#         return await read_data()
+#     except Exception as e:
+#         return JSONResponse(content={"message": "Une erreur est survenue", "error": str(e)}, status_code=500)
+
 
 
 

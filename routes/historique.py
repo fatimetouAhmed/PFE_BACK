@@ -24,7 +24,6 @@ async def historique_departement_data(user: User = Depends(check_Adminpermission
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()
-
     # Effectuer la requête pour récupérer les filières avec leurs départements
     historiques = session.query(Historiques).join(Historiques.examuns).all()
 
@@ -100,7 +99,7 @@ async def write_data_case_etudiant(id_etu:int,user_id: int = Depends(recupere_us
     date=datetime.now()
     id_super=0
     surveillant = user_id
-    print("Suveillance",surveillant)
+    # print("Suveillance",surveillant)
     id_sal = 0
     salle = []
     matiere_examun = []
@@ -114,7 +113,7 @@ async def write_data_case_etudiant(id_etu:int,user_id: int = Depends(recupere_us
         id_sal = row[0]
         salle_id = row[0]
         a = salle_id
-        print(a)
+        # print(a)
 
     q2 = session.query(examuns.c.id_mat, Salle.nom,examuns.c.id,examuns.c.type).join(examuns).filter(Salle.id == a and examuns.c.heure_deb<=date and examuns.c.heure_fin>=date )
     r2 = q2.all()
@@ -139,7 +138,7 @@ async def write_data_case_etudiant(id_etu:int,user_id: int = Depends(recupere_us
             "libelle": row[0],
         }
         matiere_examun.append(result)
-        print(matiere_examun)
+        # print(matiere_examun)
     q4= session.query(Etudiant.id,Etudiant.nom,Etudiant.prenom).filter(Etudiant.id == id_etu )
     r4=q4.all()
 
@@ -158,19 +157,26 @@ async def write_data_case_etudiant(id_etu:int,user_id: int = Depends(recupere_us
         id_super =row[0]
 
 
-    description = "Attention étudiant "+ str(etudiant[0]["nom"]) + " " + str(etudiant[0]["prenom"]) + " n'a pas d'examen en ce moment " \
-                    "et tente d'entrer dans la salle " + str(salle[0]["libelle"]) + " pour passer l'examen " + str(salle[0]["type"]) + " dans la matière " + \
-                    str(matiere_examun[0]["libelle"]) + " au moment "+ str(date) + ", le surveillant "+ str(surveillant) +" de la salle N°" + str(id_sal)
+    # description = "Attention étudiant "+ str(etudiant[0]["nom"]) + " " + str(etudiant[0]["prenom"]) + " n'a pas d'examen en ce moment " \
+    #                 "et tente d'entrer dans la salle " + str(salle[0]["libelle"]) + " pour passer l'examen " + str(salle[0]["type"]) + " dans la matière " + \
+    #                 str(matiere_examun[0]["libelle"]) + " au moment "+ str(date) + ", le surveillant "+ str(surveillant) +" de la salle N°" + str(id_sal)
+    description = "Attention étudiant " + str(etudiant[0]["nom"]) + " " + str(etudiant[0]["prenom"]) + " n'a pas d'examen en ce moment " \
+                "et tente d'entrer dans la salle " + str(salle[0]["libelle"]) + " pour passer l'examen " + str(salle[0]["type"]) + " dans la matière " + \
+                str(matiere_examun[0]["libelle"]) + " au moment " + str(date) + ", le surveillant " + str(surveillant) + " de la salle N°" + str(id_sal)
 
     con.execute(Historiques.__table__.insert().values(
         description=description,
         id_exam=salle[0]["id_exam"]
     ))
+    # print("photo  : "+image1)
+    # print("examun" + str(salle[0]["id_exam"]))
     con.execute(Notifications.__table__.insert().values(
         content=description,
         date=date,
         superviseur_id=id_super,
-        is_read=False
+        is_read=False,
+        id_exam=salle[0]["id_exam"],
+        image="",
     ))
     return description
 
@@ -191,7 +197,7 @@ async def write_data(user_id: int = Depends(recupere_userid),user: User = Depend
         id_sal = row[0]
         salle_id = row[0]
         a = salle_id
-        print(a)
+        # print(a)
 
     q2 = session.query(examuns.c.id_mat, Salle.nom,examuns.c.id,examuns.c.type).join(examuns).filter(Salle.id == a and examuns.c.heure_deb<=date and examuns.c.heure_fin>=date )
     r2 = q2.all()
@@ -216,13 +222,13 @@ async def write_data(user_id: int = Depends(recupere_userid),user: User = Depend
             "libelle": row[0],
         }
         matiere_examun.append(result)
-        print(matiere_examun)
+        # print(matiere_examun)
     q5= session.query(Surveillant.superviseur_id).filter(Surveillant.user_id == user_id )
     r5=q5.all()
 
     for row in r5:
         id_super =row[0]
-    print("supervieur",id_super)
+    # print("supervieur",id_super)
     if salle and matiere_examun:
         description = "Attention, quelqu'un n'est pas reconnu par l'application, et cette personne essaie d'entrer dans " + str(salle[0]["libelle"]) +" pour passer l'examen "\
             + str(salle[0]["type"]) + " dans la matière " + \
@@ -238,11 +244,15 @@ async def write_data(user_id: int = Depends(recupere_userid),user: User = Depend
         description=description,
         id_exam=salle[0]["id_exam"]
     ))
+    # print("photo  : "+image1)
+    # print("examun" + str(salle[0]["id_exam"]))
     con.execute(Notifications.__table__.insert().values(
         content=description,
         date=date,
         superviseur_id=id_super,
-        is_read=False
+        is_read=False,
+        id_exam=salle[0]["id_exam"],
+        image="",
     ))
     return description
 
