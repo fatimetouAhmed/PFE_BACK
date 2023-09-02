@@ -18,4 +18,3 @@ class Etudiant(Base):
     telephone = Column(String(250))
     nationalite = Column(String(250))
     date_insecription = Column(DateTime)
-    matieres = relationship('Matiere', secondary='etudiermats', backref='etudiants')

@@ -1,9 +1,14 @@
 from fastapi import APIRouter,Depends,Form
-from auth.authConfig import create_user,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
+from auth.authConfig import recupere_userid,create_user,read_data_users,Superviseur,Surveillant,Administrateur,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
 from config.db import con
+from sqlalchemy.orm import sessionmaker, relationship, Session
+from sqlalchemy import create_engine, update
+from auth.authConfig import create_user,UserResponse,UserCreate,read_users_nom,superviseur_id,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
+from auth.authConfig import get_current_user
+import os
 from schemas.etudiant import EtudiantBase
 from sqlalchemy.orm import selectinload,joinedload,sessionmaker
-from models.etudiermat import Etudiant
+from models.etudiant import Etudiant
 from models.semestre_etudiant import Etudiants
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
@@ -12,16 +17,17 @@ from datetime import datetime
 etudiant_router=APIRouter()
 
 @etudiant_router.get("/")
-async def read_data(user: User = Depends(check_Adminpermissions)):
+async def read_data():
     query =Etudiant.__table__.select()
     result_proxy = con.execute(query)   
     results = []
     for row in result_proxy:
+        nom_fichier = os.path.basename(row.photo)
         result = {
                   "id": row.id,
                   "nom": row.nom,
                   "prenom": row.prenom,
-                  "photo": row.photo,
+                  "photo": nom_fichier,
                   "genre": row.genre,
                   "date_N": row.date_N,
                   "lieu_n": row.lieu_n,
@@ -37,7 +43,7 @@ async def read_data(user: User = Depends(check_Adminpermissions)):
 
 
 @etudiant_router.get("/nometudiant")
-async def read_data(user: User = Depends(check_Adminpermissions)):
+async def read_data():
     query =Etudiant.__table__.select()
     result_proxy = con.execute(query)   
     results = []
@@ -48,7 +54,7 @@ async def read_data(user: User = Depends(check_Adminpermissions)):
     
     return results
 @etudiant_router.get("/etudiant_matiere")
-async def afficher_data(user: User = Depends(check_Adminpermissions)):
+async def afficher_data():
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()
@@ -82,7 +88,7 @@ async def afficher_data(user: User = Depends(check_Adminpermissions)):
 
     return results
 @etudiant_router.get("/etudiants_semestres")
-async def etudiants_semestres_data(user: User = Depends(check_Adminpermissions)):
+async def etudiants_semestres_data():
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()
@@ -115,7 +121,7 @@ async def etudiants_semestres_data(user: User = Depends(check_Adminpermissions))
 
     return results
 @etudiant_router.get("/{id}")
-async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
+async def read_data_by_id(id:int,):
     query =Etudiant.__table__.select().where(Etudiant.__table__.c.id==id)
     result_proxy = con.execute(query)   
     results = []
@@ -135,10 +141,10 @@ async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
     return results
     # return con.execute(Etudiant.select().where(Etudiant.c.id==id)).fetchall()
 
-UPLOAD_FOLDER = Path("C:/Users/pc/Desktop/PFE/curd_fastapi/image")
+UPLOAD_FOLDER = Path("C:/Users/pc/Desktop/PFE/curd_fastapi/images")
 UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
 @etudiant_router.post("/")
-async def write_data(id: int= Form(...),nom: str= Form(...),
+async def write_data(nom: str= Form(...),
     prenom: str= Form(...),
     genre: str= Form(...),
     date_N: datetime= Form(...),
@@ -146,77 +152,116 @@ async def write_data(id: int= Form(...),nom: str= Form(...),
     email: str= Form(...),
     telephone: int = Form(...),
     nationalite: str = Form(...),
-    date_inscription: datetime = Form(...), user: User = Depends(check_Adminpermissions),file: UploadFile = File(...)):
+    date_insecription: datetime = Form(...),file: UploadFile = File(...), user_id: int = Depends(recupere_userid), db: Session = Depends(get_db)):
     try:
-        # Obtenir l'extension du fichier
-        file_extension = file.filename.split(".")[-1]
-        # Générer un nom de fichier unique
-        file_name = f"{Path(file.filename).stem}_{hash(file.filename)}.{file_extension}"
-        # Construire le chemin pour enregistrer le fichier
-        file_path = UPLOAD_FOLDER / file_name
+        image = await file.read()      
+        # Spécifiez le chemin complet du dossier où vous souhaitez stocker l'image
+        upload_folder = r"C:\Users\pc\StudioProjects\pfe\PFE_FRONT\images\etudiants"
+       
+        # Assurez-vous que le dossier existe, sinon, créez-le
+        os.makedirs(upload_folder, exist_ok=True)      
+        # Générez un nom de fichier unique (par exemple, basé sur le timestamp)
+        unique_filename = f"{user_id}_{datetime.now().timestamp()}.jpg"   
+        # Construisez le chemin complet du fichier
+        file_path = os.path.join(upload_folder, unique_filename)  
         file_path_str = str(file_path).replace("\\", "/")
         print(file_path_str)
-
-        # Enregistrer le fichier
+        # Enregistrez l'image dans le dossier spécifié
         with open(file_path, "wb") as f:
-            f.write(file.file.read())
-        
-        con.execute(Etudiant.__table__.insert().values(
+            f.write(image)
+        print(file_path_str)    
+        # date_N = datetime.strptime('2023-09-01T22:56:45.274Z', '%Y-%m-%dT%H:%M:%S.%fZ')
+        # date_insecription = datetime.strptime('2023-09-01T22:56:45.274Z', '%Y-%m-%dT%H:%M:%S.%fZ')
+
+        # Create a new Etudiant object
+        etudiant = Etudiant(
             nom=nom,
             prenom=prenom,
-            photo=str(file_path_str),  # Utilisation directe de file_path_str
+            photo=str(file_path_str),
             genre=genre,
             date_N=date_N,
             lieu_n=lieu_n,
             email=email,
             telephone=telephone,
-            nationalite=nationalite,       
-            date_insecription=date_inscription,
-        ))
-        return await read_data()
+            nationalite=nationalite,
+            date_insecription=date_insecription,
+        )
+
+        # Add the Etudiant object to the session and commit the changes
+        db.add(etudiant)
+        db.commit()
+
+        return file_path_str
     except Exception as e:
-        return JSONResponse(content={"message": "Une erreur est survenue", "error": str(e)}, status_code=500)
-
-# @etudiant_router.post("/")
-# async def write_data(file: UploadFile = File(...)):
-#     try:
-#         # Obtenir l'extension du fichier
-#         file_extension = file.filename.split(".")[-1]
-#         # Générer un nom de fichier unique
-#         file_name = f"{Path(file.filename).stem}_{hash(file.filename)}.{file_extension}"
-#         # Construire le chemin pour enregistrer le fichier
-#         file_path = UPLOAD_FOLDER / file_name
-#         file_path_str = str(file_path).replace("\\", "/")
-#         print(file_path_str)
-
-#         # Enregistrer le fichier
-#         with open(file_path, "wb") as f:
-#             f.write(file.file.read())
-        
-#         return await read_data()
-#     except Exception as e:
-#         return JSONResponse(content={"message": "Une erreur est survenue", "error": str(e)}, status_code=500)
-
-
-
+        return {"error": str(e)}
 
 @etudiant_router.put("/{id}")
-async def update_data(id:int,etudiants:EtudiantBase,user: User = Depends(check_Adminpermissions)):
-    con.execute(Etudiant.__table__.update().values(
-        nom=etudiants.nom,
-        prenom=etudiants.prenom,
-        photo=etudiants.photo,
-        genre=etudiants.genre,
-        date_N=etudiants.date_N,
-        lieu_n=etudiants.lieu_n,
-        email=etudiants.email,
-        telephone=etudiants.telephone,
-        nationalite=etudiants.nationalite,       
-        date_insecription=etudiants.date_insecription,
-    ).where(Etudiant.__table__.c.id==id))
-    return await read_data()
+async def update_data(id:int,nom: str= Form(...),
+    prenom: str= Form(...),
+    genre: str= Form(...),
+    date_N: datetime= Form(...),
+    lieu_n: str= Form(...),
+    email: str= Form(...),
+    telephone: int = Form(...),
+    nationalite: str = Form(...),
+    date_insecription: datetime = Form(...),file: UploadFile = File(...), user_id: int = Depends(recupere_userid), db: Session = Depends(get_db)):
+    print(id)
+    Session = sessionmaker(bind=con)
+    session = Session()
+    try:
+        image = await file.read()      
+        # Spécifiez le chemin complet du dossier où vous souhaitez stocker l'image
+        upload_folder = r"C:\Users\pc\StudioProjects\pfe\PFE_FRONT\images\etudiants"
+       
+        # Assurez-vous que le dossier existe, sinon, créez-le
+        os.makedirs(upload_folder, exist_ok=True)      
+        # Générez un nom de fichier unique (par exemple, basé sur le timestamp)
+        unique_filename = f"{user_id}_{datetime.now().timestamp()}.jpg"   
+        # Construisez le chemin complet du fichier
+        file_path = os.path.join(upload_folder, unique_filename)  
+        file_path_str = str(file_path).replace("\\", "/")
+        print(file_path_str)
+        # Enregistrez l'image dans le dossier spécifié
+        with open(file_path, "wb") as f:
+            f.write(image)
+        print(file_path_str)    
+        # date_N = datetime.strptime('2023-09-01T22:56:45.274Z', '%Y-%m-%dT%H:%M:%S.%fZ')
+        # date_insecription = datetime.strptime('2023-09-01T22:56:45.274Z', '%Y-%m-%dT%H:%M:%S.%fZ')
 
+        # Create a new Etudiant object
+        # etudiant = Etudiant(
+        #     nom=nom,
+        #     prenom=prenom,
+        #     photo=str(file_path_str),
+        #     genre=genre,
+        #     date_N=date_N,
+        #     lieu_n=lieu_n,
+        #     email=email,
+        #     telephone=telephone,
+        #     nationalite=nationalite,
+        #     date_insecription=date_insecription,
+        # )
+        
+        update_stmt = update(Etudiant).where(Etudiant.id == id).values( nom=nom,
+            prenom=prenom,
+            photo=str(file_path_str),
+            genre=genre,
+            date_N=date_N,
+            lieu_n=lieu_n,
+            email=email,
+            telephone=telephone,
+            nationalite=nationalite,
+            date_insecription=date_insecription,)
+        # Execute the update statement
+        session.execute(update_stmt)
+        # Commit the changes
+        session.commit()
+        # Close the session when you're done
+        session.close()
+        return await read_data()
+    except Exception as e:
+        return {"error": str(e)}
 @etudiant_router.delete("/{id}")
-async def delete_data(id:int,user: User = Depends(check_Adminpermissions)):
+async def delete_data(id:int,):
     con.execute(Etudiant.__table__.delete().where(Etudiant.__table__.c.id==id))
     return await read_data()

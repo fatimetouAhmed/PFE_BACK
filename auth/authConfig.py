@@ -82,7 +82,8 @@ class UserCreate(BaseModel):
     pswd: str
     role: str
     photo:str
-    superviseur_id: Optional[int] = None  # Champ superviseur_id optionnel
+    superviseur_id:int
+        # Optional[int] = None  # Champ superviseur_id optionnel
 
 class UserResponse(BaseModel):
     id: int
@@ -266,3 +267,60 @@ def recupere_userid(user: User = Depends(get_current_user)):
     }
     user_id = user_data["id"]
     return user_id
+# @app.get("/")
+async def read_data_users():
+    query = User.__table__.select()
+    result_proxy = con.execute(query)
+    results = []
+    for row in result_proxy:
+        result = {
+            "id": row.id,
+            "nom": row.nom,
+            "prenom": row.prenom,
+            "email": row.email,
+            "role": row.role,
+            "photo": row.photo,
+        }
+        results.append(result)
+    return results
+async def superviseur_id(nom:str,user: User = Depends(check_Adminpermissions)):
+    # Créer une session
+    Session = sessionmaker(bind=con)
+    session = Session()
+
+    # Effectuer la requête pour récupérer les filières avec leurs départements
+    supervi = session.query(User).filter(User.nom == nom and User.role=='superviseur').all()
+     
+    # Parcourir les filières et récupérer leurs départements associés
+    id=0
+    for supervis in supervi:
+        id=supervis.id
+    
+    return id
+async def read_users_nom():
+    Session = sessionmaker(bind=con)
+    session = Session()
+
+    # Effectuer la requête pour récupérer les filières avec leurs départements
+    supervi = session.query(User.nom).filter(User.role=='superviseur').all()
+    results = []
+    for row in supervi:
+        result = {
+            "nom": row.nom,
+        }
+        results.append(result)
+    return results
+# @salle_router.put("/{id}")
+async def update_data(id:int,usercreate:UserCreate,user: User = Depends(check_Adminpermissions)):
+    con.execute(User.__tablename__.update().values(
+        nom=usercreate.nom
+    ).where(User.__tablename__.c.id==id))
+    return await read_data_users()
+
+# @salle_router.delete("/{id}")
+async def delete_data(id:int,user: User = Depends(check_Adminpermissions)):
+    con.execute(Superviseur.__tablename__.delete().where(Superviseur.__tablename__.c.user_id==id))
+    con.execute(Surveillant.__tablename__.delete().where(Surveillant.__tablename__.c.user_id==id))
+    con.execute(Administrateur.__tablename__.delete().where(Administrateur.__tablename__.c.user_id==id))
+    con.execute(User.__tablename__.delete().where(User.__tablename__.c.id==id))
+    return await read_data_users()
