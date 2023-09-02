@@ -12,7 +12,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError,jwt
 from passlib.context import CryptContext
 import datetime
-from auth.authConfig import recupere_userid,create_user,read_data_users,Superviseur,Surveillant,Administrateur,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
+from auth.authConfig import PV, recupere_userid,create_user,read_data_users,Superviseur,Surveillant,Administrateur,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
 import redis
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
@@ -334,6 +334,60 @@ def logout(access_token: str = Depends(oauth2_scheme)):
     except JWTError:
         raise HTTPException(status_code=401, detail="Token d'authentification invalide")
 
+
+#pv
+#pv
+@app.post('/api/pv')
+async def pv(file: UploadFile = File(...), current_user: User = Depends(recupere_user),description: str = Form(...), nni: str= Form(...),tel: int= Form(...), user: User = Depends(check_survpermissions),db: Session = Depends(get_db)):
+    surveillant = db.query(Surveillant).filter_by(user_id=current_user['id']).first()
+
+    try:
+        image = await file.read()
+        
+        # Spécifiez le chemin complet du dossier où vous souhaitez stocker l'image
+        upload_folder = "C:/Users/hp/Desktop/PFE/PFE/PFE_BACK/pv_images"
+        
+        # Assurez-vous que le dossier existe, sinon, créez-le
+        os.makedirs(upload_folder, exist_ok=True)
+        
+        # Générez un nom de fichier unique (par exemple, basé sur le timestamp)
+        unique_filename = f"{datetime.now().timestamp()}.jpg"
+        
+        # Construisez le chemin complet du fichier
+        file_path = os.path.join(upload_folder, unique_filename)
+        
+        # Enregistrez l'image dans le dossier spécifié
+        with open(file_path, "wb") as f:
+            f.write(image)
+            pv_record = PV(photo=file_path,description=description,nni=nni,tel=tel,surveillant_id=surveillant.user_id,date_pv=datetime.now())  # Utilisez le chemin du fichier comme URL de la photo
+            db.add(pv_record)
+            db.commit()
+        print(file_path)
+        
+        return file_path
+    except Exception as e:
+        return {"error": str(e)}
+@app.get('/pv')
+async def get_pvs(db: Session = Depends(get_db),user: User = Depends(check_survpermissions)):
+    pvs = db.query(PV).all()
+    return pvs
+@app.get('/pv/curentuser')
+async def get_pvs_user(user_id: int = Depends(recupere_userid), user: User = Depends(check_survpermissions), db: Session = Depends(get_db)):
+    pvs = db.query(PV).filter_by(surveillant_id=user_id).all()
+    return pvs
+
+@app.get("/get_surveillant_info/")
+def get_surveillant_info(user: User = Depends(check_survpermissions)):
+    surveillant = user.surveillant
+    return {
+        "id": user.id,
+        "nom": user.nom,
+        "prenom": user.prenom,
+        "email": user.email,
+        "role": user.role,
+        "photo": user.photo,
+        "typecompte": surveillant.typecompte
+    }
 if __name__ == "__main__":
     uvicorn.run(app, port=8000, host='127.0.0.1')
  
