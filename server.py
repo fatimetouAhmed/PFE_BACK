@@ -12,7 +12,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError,jwt
 from passlib.context import CryptContext
 import datetime
-from auth.authConfig import recupere_userid,create_user,read_data_users,Superviseur,Surveillant,Administrateur,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
+from auth.authConfig import user_router,recupere_userid,create_user,read_data_users,Superviseur,Surveillant,Administrateur,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
 import redis
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
@@ -77,7 +77,8 @@ app.add_middleware(
 
 # Définir les routes pour l'ensemble d'itinéraires etudiant
 app.include_router(etudiant_router, prefix="/etudiants", tags=["Etudiants"])
-
+# Définir les routes pour l'ensemble d'itinéraires etudiant
+app.include_router(user_router, prefix="/users", tags=["Users"])
 # Définir les routes pour l'ensemble d'itinéraires departementssuperviseurs
 app.include_router(departementssuperviseurs_router, prefix="/departementssuperviseurs", tags=["Departementssuperviseurs"])
 
@@ -122,9 +123,13 @@ app.include_router(historique_router, prefix="/historiques", tags=["Historiques"
 
 
 @app.post("/registeruser/", response_model=UserResponse)
-def create_user_route(user: UserCreate, db: Session = Depends(get_db)):
-    print(user)
-    return create_user(db, user)
+async def create_user_route(nom: str= Form(...),
+    prenom: str= Form(...),
+    email: str= Form(...),
+    pswd: str= Form(...),
+    role: str= Form(...), id_surv: int= Form(...),file: UploadFile = File(...), db: Session = Depends(get_db)):
+    
+    return await create_user(nom,prenom,email,pswd,role,db)
 @app.put("/{id}")
 async def update_data(id:int,usercreate:UserCreate,user: User = Depends(check_Adminpermissions)):
     con.execute(User.__table__.update().values(

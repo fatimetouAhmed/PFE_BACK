@@ -1,15 +1,16 @@
 from fastapi import APIRouter,Depends,Form
 from auth.authConfig import recupere_userid,create_user,read_data_users,Superviseur,Surveillant,Administrateur,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
+import os
 from config.db import con
-from sqlalchemy.orm import sessionmaker, relationship, Session
+
 from sqlalchemy import create_engine, update
 from auth.authConfig import create_user,UserResponse,UserCreate,read_users_nom,superviseur_id,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
 from auth.authConfig import get_current_user
-import os
 from schemas.etudiant import EtudiantBase
 from sqlalchemy.orm import selectinload,joinedload,sessionmaker
 from models.etudiant import Etudiant
 from models.semestre_etudiant import Etudiants
+from sqlalchemy.orm import sessionmaker, relationship, Session
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
 from pathlib import Path
@@ -223,25 +224,7 @@ async def update_data(id:int,nom: str= Form(...),
         print(file_path_str)
         # Enregistrez l'image dans le dossier spécifié
         with open(file_path, "wb") as f:
-            f.write(image)
-        print(file_path_str)    
-        # date_N = datetime.strptime('2023-09-01T22:56:45.274Z', '%Y-%m-%dT%H:%M:%S.%fZ')
-        # date_insecription = datetime.strptime('2023-09-01T22:56:45.274Z', '%Y-%m-%dT%H:%M:%S.%fZ')
-
-        # Create a new Etudiant object
-        # etudiant = Etudiant(
-        #     nom=nom,
-        #     prenom=prenom,
-        #     photo=str(file_path_str),
-        #     genre=genre,
-        #     date_N=date_N,
-        #     lieu_n=lieu_n,
-        #     email=email,
-        #     telephone=telephone,
-        #     nationalite=nationalite,
-        #     date_insecription=date_insecription,
-        # )
-        
+            f.write(image)      
         update_stmt = update(Etudiant).where(Etudiant.id == id).values( nom=nom,
             prenom=prenom,
             photo=str(file_path_str),
