@@ -12,7 +12,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError,jwt
 from passlib.context import CryptContext
 import datetime
-from auth.authConfig import PV, recupere_userid,create_user,read_data_users,Superviseur,Surveillant,Administrateur,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
+from auth.authConfig import PV,recupere_userid,create_user,read_data_users,Superviseur,Surveillant,Administrateur,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
 import redis
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
@@ -23,11 +23,11 @@ from datetime import datetime, timedelta
 
 from sqlalchemy.orm import sessionmaker, relationship, Session
 
-from auth.authConfig import create_user,UserResponse,UserCreate,read_users_nom,superviseur_id,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
-from auth.authConfig import get_current_user
+from auth.authConfig import create_user,UserResponse,UserCreate,recupere_user,get_current_user,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
+from auth.authConfig import get_current_user,read_users_nom,superviseur_id
 import os
 from models.etudiant import Etudiant
-# from routes.user import user_router
+from routes.user import user_router
 from routes.salle import salle_router
 from routes.departement import departement_router
 from routes.notification import notification_router
@@ -148,8 +148,8 @@ async def data_user_nom():
     return user_data
 @app.get("/id_superviseur/{nom}")
 async def data_user_id(nom:str,user: User = Depends(check_Adminpermissions)):
-    user_data = await superviseur_id(nom,user)
-    return user_data
+   user_data = await superviseur_id(nom,user)
+   return user_data
 @app.post("/token")
 def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = authenticate_user(db, form_data.username, form_data.password)
@@ -180,7 +180,9 @@ def surv_route(user: User = Depends(check_survpermissions)):
 def hello_world():
     return "hello world"
 
-UPLOAD_FOLDER = Path("C:/Users/pc/StudioProjects/pfe/PFE_FRONT/images")
+#UPLOAD_FOLDER = Path("C:/Users/pc/StudioProjects/pfe/PFE_FRONT/images")
+UPLOAD_FOLDER = Path("C:/Users/hp/Desktop/PFE/PFE/PFE_FRONT/images")
+
 UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
 @app.post("/upload/")
 async def upload_image(file1: str):
@@ -214,7 +216,7 @@ async def predict_image(file: UploadFile = File(...), user_id: int = Depends(rec
 
 
 
-@app.post('/api/pv')
+@app.post('/api/etudiant')
 async def pv(nom: str= Form(...),
     prenom: str= Form(...),
     genre: str= Form(...),
@@ -227,7 +229,7 @@ async def pv(nom: str= Form(...),
     try:
         image = await file.read()      
         # Spécifiez le chemin complet du dossier où vous souhaitez stocker l'image
-        upload_folder = r"C:\Users\pc\StudioProjects\pfe\PFE_FRONT\images\etudiants"
+        upload_folder = r"C:\Users\hp\Desktop\PFE\PFE\PFE_FRONT\images\etudiants"
        
         # Assurez-vous que le dossier existe, sinon, créez-le
         os.makedirs(upload_folder, exist_ok=True)      
@@ -335,7 +337,7 @@ def logout(access_token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=401, detail="Token d'authentification invalide")
 
 
-#pv
+
 #pv
 @app.post('/api/pv')
 async def pv(file: UploadFile = File(...), current_user: User = Depends(recupere_user),description: str = Form(...), nni: str= Form(...),tel: int= Form(...), user: User = Depends(check_survpermissions),db: Session = Depends(get_db)):
@@ -389,6 +391,6 @@ def get_surveillant_info(user: User = Depends(check_survpermissions)):
         "typecompte": surveillant.typecompte
     }
 if __name__ == "__main__":
-    uvicorn.run(app, port=8000, host='127.0.0.1')
+    uvicorn.run(app, port=8000, host='192.168.8.102')
  
 # 192.168.53.113  PUT /etudiants/32 HTTP/1.1" PUT /etudiant/2 HTTP/1.1"
