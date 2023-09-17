@@ -142,7 +142,7 @@ async def read_data_by_id(id:int,):
     return results
     # return con.execute(Etudiant.select().where(Etudiant.c.id==id)).fetchall()
 
-UPLOAD_FOLDER = Path("C:/Users/pc/Desktop/PFE/curd_fastapi/images")
+UPLOAD_FOLDER = Path("C:/Users/pc/StudioProjects/pfe/PFE_FRONT/images/etudiants")
 UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
 @etudiant_router.post("/")
 async def write_data(nom: str= Form(...),

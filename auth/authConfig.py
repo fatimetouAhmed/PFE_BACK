@@ -1,5 +1,5 @@
 from fastapi import Depends, FastAPI, HTTPException, status 
-from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey ,DateTime
 from sqlalchemy.orm import sessionmaker, relationship, Session
 from passlib.hash import bcrypt
 from sqlalchemy import create_engine, update
@@ -20,6 +20,7 @@ from datetime import datetime
 user_router=APIRouter()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=con)
 # Create a session
+#Base = declarative_base()
 Base = declarative_base()
 
 # ...
@@ -34,7 +35,7 @@ def get_db():
 
 # Modèles de données (tables)
 class User(Base):
-    __tablename__ = "users"
+    __tablename__ = "users"  # Spécifiez le nom de la table dans la base de données
 
     id = Column(Integer, primary_key=True, index=True)
     nom = Column(String(255))
@@ -64,9 +65,23 @@ class Surveillant(Base):
     # imary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
     superviseur_id = Column(Integer, ForeignKey("superviseurs.user_id"))
-
+    typecompte=Column(String(255), nullable=False,default="principale")
     user= relationship("User", back_populates="surveillant", uselist=False)
     superviseur = relationship("Superviseur", back_populates="surveillant", uselist=False)
+    pv = relationship("PV", back_populates="surveillant", uselist=False)
+
+
+class PV(Base):
+    __tablename__ = "pv"
+
+    id = Column(Integer, primary_key=True, index=True)
+    description = Column(String(255), nullable=True)
+    nni = Column(String(255), nullable=True)
+    surveillant_id = Column(Integer, ForeignKey("surveillants.user_id"))
+    photo = Column(String(255), nullable=True)
+    tel = Column(Integer, nullable=True)
+    date_pv = Column(DateTime, default=datetime.now)
+    surveillant = relationship("Surveillant", back_populates="pv")
 
 class Superviseur(Base):
     __tablename__ = "superviseurs"

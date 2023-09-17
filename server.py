@@ -12,7 +12,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError,jwt
 from passlib.context import CryptContext
 import datetime
-from auth.authConfig import user_router,recupere_userid,create_user,read_data_users,Superviseur,Surveillant,Administrateur,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
+from auth.authConfig import PV,recupere_userid,create_user,read_data_users,Superviseur,Surveillant,Administrateur,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
 import redis
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
@@ -23,11 +23,11 @@ from datetime import datetime, timedelta
 
 from sqlalchemy.orm import sessionmaker, relationship, Session
 
-from auth.authConfig import create_user,UserResponse,UserCreate,read_users_nom,superviseur_id,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
-from auth.authConfig import get_current_user
+from auth.authConfig import create_user,UserResponse,UserCreate,recupere_user,get_current_user,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
+from auth.authConfig import get_current_user,read_users_nom,superviseur_id
 import os
 from models.etudiant import Etudiant
-# from routes.user import user_router
+from routes.user import user_router
 from routes.salle import salle_router
 from routes.departement import departement_router
 from routes.notification import notification_router
@@ -77,8 +77,7 @@ app.add_middleware(
 
 # Définir les routes pour l'ensemble d'itinéraires etudiant
 app.include_router(etudiant_router, prefix="/etudiants", tags=["Etudiants"])
-# Définir les routes pour l'ensemble d'itinéraires etudiant
-app.include_router(user_router, prefix="/users", tags=["Users"])
+
 # Définir les routes pour l'ensemble d'itinéraires departementssuperviseurs
 app.include_router(departementssuperviseurs_router, prefix="/departementssuperviseurs", tags=["Departementssuperviseurs"])
 
@@ -123,13 +122,9 @@ app.include_router(historique_router, prefix="/historiques", tags=["Historiques"
 
 
 @app.post("/registeruser/", response_model=UserResponse)
-async def create_user_route(nom: str= Form(...),
-    prenom: str= Form(...),
-    email: str= Form(...),
-    pswd: str= Form(...),
-    role: str= Form(...), id_surv: int= Form(...),file: UploadFile = File(...), db: Session = Depends(get_db)):
-    
-    return await create_user(nom,prenom,email,pswd,role,db)
+def create_user_route(user: UserCreate, db: Session = Depends(get_db)):
+    print(user)
+    return create_user(db, user)
 @app.put("/{id}")
 async def update_data(id:int,usercreate:UserCreate,user: User = Depends(check_Adminpermissions)):
     con.execute(User.__table__.update().values(
@@ -153,8 +148,8 @@ async def data_user_nom():
     return user_data
 @app.get("/id_superviseur/{nom}")
 async def data_user_id(nom:str,user: User = Depends(check_Adminpermissions)):
-    user_data = await superviseur_id(nom,user)
-    return user_data
+   user_data = await superviseur_id(nom,user)
+   return user_data
 @app.post("/token")
 def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = authenticate_user(db, form_data.username, form_data.password)
@@ -185,18 +180,32 @@ def surv_route(user: User = Depends(check_survpermissions)):
 def hello_world():
     return "hello world"
 
-UPLOAD_FOLDER = Path("C:/Users/pc/StudioProjects/pfe/PFE_FRONT/images")
+#UPLOAD_FOLDER = Path("C:/Users/pc/StudioProjects/pfe/PFE_FRONT/images")
+UPLOAD_FOLDER = Path("C:/Users/pc/StudioProjects/pfe/PFE_FRONT/images/pv")
+
 UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
 @app.post("/upload/")
 async def upload_image(file1: str):
-    file: UploadFile = File(file1)
+    # file: UploadFile = File(file1)
     try:
-        # Obtenir l'extension du fichier
-        file_extension = file.split(".")[-1]
-        # Générer un nom de fichier unique
-        file_name = f"{Path(file).stem}_{hash(file)}.{file_extension}"
-        # Construire le chemin pour enregistrer le fichier
-        file_path = UPLOAD_FOLDER / file_name
+        image = await file1.read()      
+        # Spécifiez le chemin complet du dossier où vous souhaitez stocker l'image
+        upload_folder = r"C:\Users\pc\StudioProjects\pfe\PFE_FRONT\images\pv"
+       
+        # Assurez-vous que le dossier existe, sinon, créez-le
+        os.makedirs(upload_folder, exist_ok=True)      
+        # Générez un nom de fichier unique (par exemple, basé sur le timestamp)
+        unique_filename = f"{datetime.now().timestamp()}.jpg"   
+        # Construisez le chemin complet du fichier
+        file_path = os.path.join(upload_folder, unique_filename)  
+        file_path_str = str(file_path).replace("\\", "/")
+        print(file_path_str)
+        # # Obtenir l'extension du fichier
+        # file_extension = image.split(".")[-1]
+        # # Générer un nom de fichier unique
+        # file_name = f"{Path(image).stem}_{hash(image)}.{file_extension}"
+        # # Construire le chemin pour enregistrer le fichier
+        # file_path = UPLOAD_FOLDER / file_name
 
         with open(file1, "rb") as source_file:
             # Ouvrir le fichier de destination en mode écriture binaire
@@ -219,7 +228,7 @@ async def predict_image(file: UploadFile = File(...), user_id: int = Depends(rec
 
 
 
-@app.post('/api/pv')
+@app.post('/api/etudiant')
 async def pv(nom: str= Form(...),
     prenom: str= Form(...),
     genre: str= Form(...),
@@ -232,7 +241,7 @@ async def pv(nom: str= Form(...),
     try:
         image = await file.read()      
         # Spécifiez le chemin complet du dossier où vous souhaitez stocker l'image
-        upload_folder = r"C:\Users\pc\StudioProjects\pfe\PFE_FRONT\images\etudiants"
+        upload_folder = r"C:\Users\hp\Desktop\PFE\PFE\PFE_FRONT\images\etudiants"
        
         # Assurez-vous que le dossier existe, sinon, créez-le
         os.makedirs(upload_folder, exist_ok=True)      
@@ -339,7 +348,60 @@ def logout(access_token: str = Depends(oauth2_scheme)):
     except JWTError:
         raise HTTPException(status_code=401, detail="Token d'authentification invalide")
 
+
+
+#pv
+@app.post('/api/pv')
+async def pv(file: UploadFile = File(...), current_user: User = Depends(recupere_user),description: str = Form(...), nni: str= Form(...),tel: int= Form(...), user: User = Depends(check_survpermissions),db: Session = Depends(get_db)):
+    surveillant = db.query(Surveillant).filter_by(user_id=current_user['id']).first()
+
+    try:
+        image = await file.read()      
+        # Spécifiez le chemin complet du dossier où vous souhaitez stocker l'image
+        upload_folder = r"C:\Users\pc\StudioProjects\pfe\PFE_FRONT\images\pv"
+       
+        # Assurez-vous que le dossier existe, sinon, créez-le
+        os.makedirs(upload_folder, exist_ok=True)      
+        # Générez un nom de fichier unique (par exemple, basé sur le timestamp)
+        unique_filename = f"{datetime.now().timestamp()}.jpg"   
+        # Construisez le chemin complet du fichier
+        file_path = os.path.join(upload_folder, unique_filename)  
+        file_path_str = str(file_path).replace("\\", "/")
+        print(file_path_str)
+        
+        # Enregistrez l'image dans le dossier spécifié
+        with open(file_path, "wb") as f:
+            f.write(image)
+        pv_record = PV(photo=file_path,description=description,nni=nni,tel=tel,surveillant_id=surveillant.user_id,date_pv=datetime.now())  # Utilisez le chemin du fichier comme URL de la photo
+        db.add(pv_record)
+        db.commit()
+        print(file_path)
+        
+        return file_path
+    except Exception as e:
+        return {"error": str(e)}
+@app.get('/pv')
+async def get_pvs(db: Session = Depends(get_db),user: User = Depends(check_survpermissions)):
+    pvs = db.query(PV).all()
+    return pvs
+@app.get('/pv/curentuser')
+async def get_pvs_user(user_id: int = Depends(recupere_userid), user: User = Depends(check_survpermissions), db: Session = Depends(get_db)):
+    pvs = db.query(PV).filter_by(surveillant_id=user_id).all()
+    return pvs
+
+@app.get("/get_surveillant_info/")
+def get_surveillant_info(user: User = Depends(check_survpermissions)):
+    surveillant = user.surveillant
+    return {
+        "id": user.id,
+        "nom": user.nom,
+        "prenom": user.prenom,
+        "email": user.email,
+        "role": user.role,
+        "photo": user.photo,
+        "typecompte": surveillant.typecompte
+    }
 if __name__ == "__main__":
-    uvicorn.run(app, port=8000, host='127.0.0.1')
+    uvicorn.run(app, port=8000, host='192.168.101.113')
  
 # 192.168.53.113  PUT /etudiants/32 HTTP/1.1" PUT /etudiant/2 HTTP/1.1"
