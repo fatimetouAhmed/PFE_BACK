@@ -12,7 +12,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError,jwt
 from passlib.context import CryptContext
 import datetime
-from auth.authConfig import PV,recupere_userid,create_user,read_data_users,Superviseur,Surveillant,Administrateur,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
+from auth.authConfig import PV,recupere_userid,create_user,read_data_users,read_data_users_by_id,Superviseur,Surveillant,Administrateur,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
 import redis
 from fastapi import FastAPI, File, UploadFile
 from fastapi.responses import JSONResponse
@@ -138,10 +138,14 @@ async def delete_data(id:int,user: User = Depends(check_Adminpermissions)):
     con.execute(Administrateur.__table__.delete().where(Administrateur.__table__.c.user_id==id))
     con.execute(User.__table__.delete().where(User.__table__.c.id==id))
     return await read_data_users()
+@app.get("/user_data_by_id/{id}")
+async def read_data_users_by(id:int):
+    user_data2 = await read_data_users_by_id(id)
+    return user_data2
 @app.get("/user_data/")
 async def data_user_route():
-    user_data = await read_data_users()
-    return user_data
+    user_data1 = await read_data_users()
+    return user_data1
 @app.get("/nomsuperviseur/")
 async def data_user_nom():
     user_data = await read_users_nom()
@@ -402,6 +406,6 @@ def get_surveillant_info(user: User = Depends(check_survpermissions)):
         "typecompte": surveillant.typecompte
     }
 if __name__ == "__main__":
-    uvicorn.run(app, port=8000, host='192.168.101.113')
+    uvicorn.run(app, port=8000, host='127.0.0.1')
  
 # 192.168.53.113  PUT /etudiants/32 HTTP/1.1" PUT /etudiant/2 HTTP/1.1"

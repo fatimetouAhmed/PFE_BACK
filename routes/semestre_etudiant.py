@@ -7,42 +7,51 @@ from models.semestre_etudiant import semestre_etudiants
 from models.semestre_etudiant import Etudiants
 from models.semestre_etudiant import Semestres
 # from models.etudiant import Etudiant
-# from models.matiere import Matiere
+# from models.Etudiants import Etudiants
 from schemas.semestre_etudiant import Semestre_etudiant
 
 semestre_etudiant_router=APIRouter()
-# @semestre_etudiant_router.get("/etudiants_semestres")
-# async def etudiants_semestres_data():
-#     # Créer une session
-#     Session = sessionmaker(bind=con)
-#     session = Session()
+@semestre_etudiant_router.get("/read")
+def get_semestre_etudiants_data():
+    Session = sessionmaker(bind=con)
+    session = Session()
+    query = select(semestre_etudiants.c.id,
+                   semestre_etudiants.c.id_etu,
+                   semestre_etudiants.c.id_sem,
+                   Etudiants.prenom,
+                   Semestres.nom). \
+        join(Etudiants, Etudiants.id == semestre_etudiants.c.id_etu). \
+        join(Semestres, Semestres.id == semestre_etudiants.c.id_sem)
 
-#     # Effectuer la requête pour récupérer les étudiants avec leurs matières
-#     semestre_etudiants = session.query(semestre_etudiants).options(joinedload(Etudiants.semestres,Semestres.semestres_etudiants)).all()
+    result = session.execute(query).fetchall()
+    formatted_data = [{'id': row.id,
+                       'id_etu': row.id_etu,
+                       'id_sem': row.id_sem,
+                       'etudiant':row.prenom,
+                       'semestre': row.nom} for row in result]
+    return formatted_data
 
-#     # Parcourir les étudiants et récupérer leurs matières associées
-#     results = []
-#     for semestre_etudiant in semestre_etudiants:
-#         result = {
-#             "id": semestre_etudiant.id,
-#             "id_sem": semestre_etudiant.id_sem,
-#             "id_etu": semestre_etudiant.id_etu,
-#             "semestres": [],
-#             "etudiants": [],
-#         }
-#         for etudiant in etudiant.etudiants:
-#             result["semestres"].append({
-#                 "nom": etudiant.nom,
-#             })
-#         for etudiant in etudiant.semestres:
-#             result["etudiants"].append({
-#                 "nom": semestre.nom,
-#             })
-#         results.append(result)
+@semestre_etudiant_router.get("/read/{id}")
+async def read_data_by_id(id:int,):
+    Session = sessionmaker(bind=con)
+    session = Session()
+    query = select(semestre_etudiants.c.id,
+                   semestre_etudiants.c.id_etu,
+                   semestre_etudiants.c.id_sem,
+                   Etudiants.prenom,
+                   Semestres.nom). \
+        join(Etudiants, Etudiants.id == semestre_etudiants.c.id_etu). \
+        join(Semestres, Semestres.id == semestre_etudiants.c.id_sem).filter(semestre_etudiants.c.id==id)
 
-#     return results
+    result = session.execute(query).fetchall()
+    formatted_data = [{'id': row.id,
+                       'id_etu': row.id_etu,
+                       'id_sem': row.id_sem,
+                       'etudiant':row.prenom ,
+                       'semestre': row.nom} for row in result]
+    return formatted_data
 @semestre_etudiant_router.get("/")
-async def read_data(user: User = Depends(check_Adminpermissions)):
+async def read_data():
     query =semestre_etudiants.select()
     result_proxy = con.execute(query)   
     results = []
@@ -58,7 +67,7 @@ async def read_data(user: User = Depends(check_Adminpermissions)):
     # return con.execute(semestre_etudiants.select().fetchall())
 
 @semestre_etudiant_router.get("/{id}")
-async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
+async def read_data_by_id(id:int,):
     query =semestre_etudiants.select().where(semestre_etudiants.c.id==id)
     result_proxy = con.execute(query)   
     results = []
@@ -71,7 +80,7 @@ async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
     return results
     # return con.execute(semestre_etudiants.select().where(semestre_etudiants.c.id==id)).fetchall()
 @semestre_etudiant_router.get("/etudiant/{nom}")
-async def etudiant_id(nom:str,user: User = Depends(check_Adminpermissions)):
+async def etudiant_id(nom:str,):
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()
@@ -86,7 +95,7 @@ async def etudiant_id(nom:str,user: User = Depends(check_Adminpermissions)):
     return id
 
 @semestre_etudiant_router.get("/semestre/{nom}")
-async def semestre_id(nom:str,user: User = Depends(check_Adminpermissions)):
+async def semestre_id(nom:str,):
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()
@@ -99,7 +108,7 @@ async def semestre_id(nom:str,user: User = Depends(check_Adminpermissions)):
         id=semestre.id   
     return id
 @semestre_etudiant_router.post("/")
-async def write_data(semestre_etudiant:Semestre_etudiant,user: User = Depends(check_Adminpermissions)):
+async def write_data(semestre_etudiant:Semestre_etudiant,):
 
     con.execute(semestre_etudiants.insert().values(
 
@@ -111,7 +120,7 @@ async def write_data(semestre_etudiant:Semestre_etudiant,user: User = Depends(ch
 
 
 @semestre_etudiant_router.put("/{id}")
-async def update_data(id:int,semestre_etudiant:Semestre_etudiant,user: User = Depends(check_Adminpermissions)):
+async def update_data(id:int,semestre_etudiant:Semestre_etudiant,):
     con.execute(semestre_etudiants.update().values(
         id_etu=semestre_etudiant.id_etu,
         id_sem=semestre_etudiant.id_sem,
@@ -119,6 +128,6 @@ async def update_data(id:int,semestre_etudiant:Semestre_etudiant,user: User = De
     return await read_data()
 
 @semestre_etudiant_router.delete("/{id}")
-async def delete_data(id:int,user: User = Depends(check_Adminpermissions)):
+async def delete_data(id:int,):
     con.execute(semestre_etudiants.delete().where(semestre_etudiants.c.id==id))
     return await read_data()

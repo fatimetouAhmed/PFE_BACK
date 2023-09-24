@@ -9,7 +9,7 @@ from sqlalchemy.orm import selectinload,joinedload,sessionmaker
 
 salle_router=APIRouter()
 @salle_router.get("/surveillance_salle")
-async def afficher_data(user: User = Depends(check_Adminpermissions)):
+async def afficher_data():
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()
@@ -32,7 +32,7 @@ async def afficher_data(user: User = Depends(check_Adminpermissions)):
 
     return results
 @salle_router.get("/matieres_salles")
-async def matieres_salles_data(user: User = Depends(check_Adminpermissions)):
+async def matieres_salles_data():
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()
@@ -57,7 +57,7 @@ async def matieres_salles_data(user: User = Depends(check_Adminpermissions)):
 
     return results
 @salle_router.get("/")
-async def read_data(user: User = Depends(check_Adminpermissions)):
+async def read_data():
     query = salles.select()
     result_proxy = con.execute(query)   
     results = []
@@ -68,7 +68,7 @@ async def read_data(user: User = Depends(check_Adminpermissions)):
     
     return results
 @salle_router.get("/nom")
-async def read_data(user: User = Depends(check_Adminpermissions)):
+async def read_data():
     query = salles.select()
     result_proxy = con.execute(query)   
     results = []
@@ -81,7 +81,7 @@ async def read_data(user: User = Depends(check_Adminpermissions)):
     # return con.execute(salle.select().fetchall())
 
 @salle_router.get("/{id}")
-async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
+async def read_data_by_id(id:int,):
     query = salles.select().where(salles.c.id==id)
     result_proxy = con.execute(query)   
     results = []
@@ -93,20 +93,20 @@ async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
     # return con.execute(salle.select().where(salle.c.id==id)).fetchall()
 
 @salle_router.post("/")
-async def write_data(salle:SalleBase,user: User = Depends(check_Adminpermissions)):
+async def write_data(salle:SalleBase,):
     con.execute(salles.insert().values(
         nom=salle.nom
         ))
     return await read_data()
 
 @salle_router.put("/{id}")
-async def update_data(id:int,salle:SalleBase,user: User = Depends(check_Adminpermissions)):
+async def update_data(id:int,salle:SalleBase,):
     con.execute(salles.update().values(
         nom=salle.nom
     ).where(salles.c.id==id))
     return await read_data()
 
 @salle_router.delete("/{id}")
-async def delete_data(id:int,user: User = Depends(check_Adminpermissions)):
+async def delete_data(id:int,):
     con.execute(salles.delete().where(salles.c.id==id))
     return await read_data()

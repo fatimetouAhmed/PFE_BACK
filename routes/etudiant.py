@@ -127,9 +127,12 @@ async def read_data_by_id(id:int,):
     result_proxy = con.execute(query)   
     results = []
     for row in result_proxy:
-        result = {"nom": row.nom,
+        nom_photo = os.path.basename(row.photo)
+        result = {
+            "id": row.id,
+            "nom": row.nom,
                   "prenom": row.prenom,
-                  "photo": row.photo,
+                  "photo": nom_photo ,
                   "genre": row.genre,
                   "date_N": row.date_N,
                   "lieu_n": row.lieu_n,

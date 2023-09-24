@@ -16,7 +16,7 @@ async def read_data():
     
     return results
 @departement_router.get("/nomdepartement")
-async def read_data(user: User = Depends(check_Adminpermissions)):
+async def read_data():
     query = Departements.__table__.select()
     result_proxy = con.execute(query)   
     results = []
@@ -29,7 +29,7 @@ async def read_data(user: User = Depends(check_Adminpermissions)):
     # return con.execute(departement.select().fetchall())
 
 @departement_router.get("/{id}")
-async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
+async def read_data_by_id(id:int,):
     query = Departements.__table__.select().where(Departements.__table__.c.id==id)
     result_proxy = con.execute(query)   
     results = []
@@ -41,7 +41,7 @@ async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
     # return con.execute(departement.select().where(departement.c.id==id)).fetchall()
 
 @departement_router.post("/")
-async def write_data(departement:Departement,user: User = Depends(check_Adminpermissions)):
+async def write_data(departement:Departement,):
     print("nom",departement.nom)
     con.execute(Departements.__table__.insert().values(
         nom=departement.nom
@@ -49,13 +49,13 @@ async def write_data(departement:Departement,user: User = Depends(check_Adminper
     return await read_data()
 
 @departement_router.put("/{id}")
-async def update_data(id:int,departement:Departement,user: User = Depends(check_Adminpermissions)):
+async def update_data(id:int,departement:Departement,):
     con.execute(Departements.__table__.update().values(
         nom=departement.nom
     ).where(Departements.__table__.c.id==id))
     return await read_data()
 
 @departement_router.delete("/{id}")
-async def delete_data(id:int,user: User = Depends(check_Adminpermissions)):
+async def delete_data(id:int,):
     con.execute(Departements.__table__.delete().where(Departements.__table__.c.id==id))
     return await read_data()

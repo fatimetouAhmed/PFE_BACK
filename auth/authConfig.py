@@ -323,8 +323,25 @@ def recupere_userid(user: User = Depends(get_current_user)):
     return user_id
 # @app.get("/")
 async def read_data_users():
-    query = User.__table__.select()
-    result_proxy = con.execute(query)
+    result_proxy = con.execute(User.__table__.select())
+    results = []
+    for row in result_proxy:
+        nom_fichier = os.path.basename(row.photo)
+        result = {
+            "id": row.id,
+            "nom": row.nom,
+            "prenom": row.prenom,
+            "email": row.email,
+            "role": row.role,
+            "photo": nom_fichier,
+        }
+        results.append(result)
+    return results
+
+async def read_data_users_by_id(id:int):
+    
+    # query = User.__table__.
+    result_proxy =     con.execute(User.__table__.select().where(User.__table__.c.id==id))
     results = []
     for row in result_proxy:
         nom_fichier = os.path.basename(row.photo)

@@ -18,6 +18,13 @@ from sqlalchemy.orm import selectinload,joinedload,sessionmaker
 from sqlalchemy import select, literal_column,column
 from datetime import datetime
 historique_router=APIRouter()
+@historique_router.get("/historique/{id}")
+async def historique_id(id:int):
+    # Créer une session
+    Session = sessionmaker(bind=con)
+    session = Session()
+    count = session.query(Historiques).filter(Historiques.id_exam == id).count() 
+    return count
 
 @historique_router.get("/historique_examun")
 async def historique_departement_data(user: User = Depends(check_Adminpermissions)):

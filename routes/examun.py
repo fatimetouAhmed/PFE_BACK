@@ -40,10 +40,33 @@ async def matiere_id(nom:str):
     for matiere in matieres:
         id=matiere.id   
     return id
+@examun_router.get("/examun/nom")
+async def examun_nom():
+    # Créer une session
+    Session = sessionmaker(bind=con)
+    session = Session()
+
+    # Effectuer la requête pour récupérer les filières avec leurs départements
+    exs = session.query(examuns.c.id,examuns.c.type).all()
+     
+    # Parcourir les filières et récupérer leurs départements associés
+    examun = []
+    for ex in exs:
+        noms = {
+            "id":ex.id,
+            "type": ex.type  
+        }
+        examun.append(noms)
+    return examun
+
 @examun_router.get("/")
-async def read_data(user: User = Depends(check_Adminpermissions)):
-    query =examuns.select()
-    result_proxy = con.execute(query)   
+async def read_data():
+    Session = sessionmaker(bind=con)
+    session = Session()
+    result_proxy = session.query(examuns.c.id,examuns.c.type,examuns.c.heure_deb,examuns.c.heure_fin,examuns.c.id_mat,examuns.c.id_sal,Matieres.libelle, Salle.nom)\
+               .join(Matieres, Matieres.id == examuns.c.id_mat)\
+               .join(Salle, Salle.id == examuns.c.id_sal)\
+               .all()
     results = []
     for row in result_proxy:
         result = {
@@ -51,8 +74,10 @@ async def read_data(user: User = Depends(check_Adminpermissions)):
                  "type": row.type,
                   "heure_deb": row.heure_deb,
                   "heure_fin": row.heure_fin,
+                "id_mat": row.id_mat,
                   "id_sal": row.id_sal,
-                  "id_mat": row.id_mat,
+                   "matiere": row.libelle,
+                    "salle": row.nom,
                   }  # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
         results.append(result)
     
@@ -60,18 +85,25 @@ async def read_data(user: User = Depends(check_Adminpermissions)):
     # return con.execute(examuns.select().fetchall())
 
 @examun_router.get("/{id}")
-async def read_data_by_id(id:int,user: User = Depends(check_permissions)):
-    query =examuns.select().where(examuns.c.id_mat==id)
-    result_proxy = con.execute(query)   
+async def read_data_by_id(id:int):
+    Session = sessionmaker(bind=con)
+    session = Session()
+    result_proxy = session.query(examuns.c.id,examuns.c.type,examuns.c.heure_deb,examuns.c.heure_fin,examuns.c.id_mat,examuns.c.id_sal,Matieres.libelle, Salle.nom)\
+               .join(Matieres, Matieres.id == examuns.c.id_mat)\
+               .join(Salle, Salle.id == examuns.c.id_sal)\
+               .filter(examuns.c.id==id)
     results = []
     for row in result_proxy:
         result = {
-                  "id": row.id,
-                  "type": row.type,
+                 "id": row.id,
+                 "type": row.type,
                   "heure_deb": row.heure_deb,
                   "heure_fin": row.heure_fin,
+                  "id_mat": row.id_mat,
                   "id_sal": row.id_sal,
-                  "id_mat": row.id_mat,}   # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
+                   "matiere": row.libelle,
+                    "salle": row.nom,
+                  }  # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
         results.append(result)
     
     return results
@@ -79,7 +111,7 @@ async def read_data_by_id(id:int,user: User = Depends(check_permissions)):
 
 
 @examun_router.post("/")
-async def write_data(examun:Examun,user: User = Depends(check_Adminpermissions)):
+async def write_data(examun:Examun,):
 
     con.execute(examuns.insert().values(
         type=examun.type,
@@ -93,7 +125,7 @@ async def write_data(examun:Examun,user: User = Depends(check_Adminpermissions))
 
 
 @examun_router.put("/{id}")
-async def update_data(id:int,examun:Examun,user: User = Depends(check_Adminpermissions)):
+async def update_data(id:int,examun:Examun,):
     con.execute(examuns.update().values(
         type=examun.type,
         heure_deb=examun.heure_deb,
@@ -104,6 +136,6 @@ async def update_data(id:int,examun:Examun,user: User = Depends(check_Adminpermi
     return await read_data()
 
 @examun_router.delete("/{id}")
-async def delete_data(id:int,user: User = Depends(check_Adminpermissions)):
+async def delete_data(id:int,):
     con.execute(examuns.delete().where(examuns.c.id==id))
     return await read_data()

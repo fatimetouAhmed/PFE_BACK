@@ -44,7 +44,7 @@ async def afficher_data():
     return results
 
 @matiere_router.get("/matieres_salles")
-async def matieres_salles_data(user: User = Depends(check_Adminpermissions)):
+async def matieres_salles_data():
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()
@@ -70,7 +70,7 @@ async def matieres_salles_data(user: User = Depends(check_Adminpermissions)):
 
     return results
 @matiere_router.get("/")
-async def read_data(user: User = Depends(check_Adminpermissions)):
+async def read_data():
     query = select(Matiere) # Utilisez select(Matiere) au lieu de select([Matiere])
     matieres = con.execute(query)
  
@@ -86,7 +86,7 @@ async def read_data(user: User = Depends(check_Adminpermissions)):
 
     return results
 @matiere_router.get("/nom")
-async def read_data(user: User = Depends(check_Adminpermissions)):
+async def read_data():
     query = select(Matiere) # Utilisez select(Matiere) au lieu de select([Matiere])
     matieres = con.execute(query)
  
@@ -101,12 +101,14 @@ async def read_data(user: User = Depends(check_Adminpermissions)):
     # return con.execute(matieres.select().fetchall())
 
 @matiere_router.get("/{id}")
-async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
+async def read_data_by_id(id:int,):
     query = Matiere.__table__.select().where(Matiere.__table__.c.id==id)
     result_proxy = con.execute(query)   
     results = []
     for row in result_proxy:
-        result = {"libelle": row.libelle,
+        result = {
+            "id": row.id,
+            "libelle": row.libelle,
                   "nbre_heure": row.nbre_heure,
                   "credit": row.credit}  # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
         results.append(result)
@@ -115,7 +117,7 @@ async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
     # return con.execute(matieres.select().where(matieres.c.id==id)).fetchall()
 
 @matiere_router.post("/")
-async def write_data(matieres:MatiereBase,user: User = Depends(check_Adminpermissions)):
+async def write_data(matieres:MatiereBase,):
     # print("nom",matiere.nom)
     con.execute(Matiere.__table__.insert().values(
         libelle=matieres.libelle,
@@ -125,7 +127,7 @@ async def write_data(matieres:MatiereBase,user: User = Depends(check_Adminpermis
     return await read_data()
 
 @matiere_router.put("/{id}")
-async def update_data(id:int,matieres:MatiereBase,user: User = Depends(check_Adminpermissions)):
+async def update_data(id:int,matieres:MatiereBase,):
     con.execute(Matiere.__table__.update().values(
         libelle=matieres.libelle,
         nbre_heure=matieres.nbre_heure,
@@ -134,6 +136,6 @@ async def update_data(id:int,matieres:MatiereBase,user: User = Depends(check_Adm
     return await read_data()
 
 @matiere_router.delete("/{id}")
-async def delete_data(id:int,user: User = Depends(check_Adminpermissions)):
+async def delete_data(id:int,):
     con.execute(Matiere.__table__.delete().where(Matiere.__table__.c.id==id))
     return await read_data()

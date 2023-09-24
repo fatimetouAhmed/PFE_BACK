@@ -13,7 +13,7 @@ from schemas.etudiermat import Etudiermat
 
 etudiermat_router=APIRouter()
 @etudiermat_router.get("/matiere/{nom}")
-async def matiere_id(nom:str,user: User = Depends(check_Adminpermissions)):
+async def matiere_id(nom:str,):
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()
@@ -27,15 +27,24 @@ async def matiere_id(nom:str,user: User = Depends(check_Adminpermissions)):
         id=matiere.id   
     return id
 @etudiermat_router.get("/")
-async def read_data(user: User = Depends(check_Adminpermissions)):
-    query =etudiermats.select()
-    result_proxy = con.execute(query)   
+async def read_data():
+    # query =etudiermats.select()
+    Session = sessionmaker(bind=con)
+    session = Session()
+
+    # Effectuer la requête pour récupérer les étudiants avec leurs matières
+    result_proxy = session.query(etudiermats.c.id,etudiermats.c.id_etu,etudiermats.c.id_mat,Etudiant.prenom, Etudiant.nom, Matiere.libelle)\
+               .join(Etudiant, Etudiant.id == etudiermats.c.id_etu)\
+               .join(Matiere, Matiere.id == etudiermats.c.id_mat)\
+               .all()
     results = []
     for row in result_proxy:
         result = {
                  "id": row.id,
                   "id_etu": row.id_etu,
                   "id_mat": row.id_mat,
+                  "etudiant": row.prenom +' '+row.nom,
+                  "matiere": row.libelle,
                   }  # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
         results.append(result)
     
@@ -43,14 +52,24 @@ async def read_data(user: User = Depends(check_Adminpermissions)):
     # return con.execute(etudiermats.select().fetchall())
 
 @etudiermat_router.get("/{id}")
-async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
-    query =etudiermats.select().where(etudiermats.c.id==id)
-    result_proxy = con.execute(query)   
+async def read_data_by_id(id:int,):
+    Session = sessionmaker(bind=con)
+    session = Session()
+
+    # Effectuer la requête pour récupérer les étudiants avec leurs matières
+    result_proxy = session.query(etudiermats.c.id,etudiermats.c.id_etu,etudiermats.c.id_mat,Etudiant.prenom, Etudiant.nom, Matiere.libelle)\
+               .join(Etudiant, Etudiant.id == etudiermats.c.id_etu)\
+               .join(Matiere, Matiere.id == etudiermats.c.id_mat)\
+               .filter(etudiermats.c.id==id)
     results = []
     for row in result_proxy:
         result = {
+                 "id": row.id,
                   "id_etu": row.id_etu,
-                  "id_mat": row.id_mat,}   # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
+                  "id_mat": row.id_mat,
+                  "etudiant": row.prenom +' '+row.nom,
+                  "matiere": row.libelle,
+                  }  # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
         results.append(result)
     
     return results
@@ -58,7 +77,7 @@ async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
 
 
 @etudiermat_router.post("/")
-async def write_data(etudiermat:Etudiermat,user: User = Depends(check_Adminpermissions)):
+async def write_data(etudiermat:Etudiermat,):
 
     con.execute(etudiermats.insert().values(
 
@@ -70,7 +89,7 @@ async def write_data(etudiermat:Etudiermat,user: User = Depends(check_Adminpermi
 
 
 @etudiermat_router.put("/{id}")
-async def update_data(id:int,etudiermat:Etudiermat,user: User = Depends(check_Adminpermissions)):
+async def update_data(id:int,etudiermat:Etudiermat,):
     con.execute(etudiermats.update().values(
         id_etu=etudiermat.id_etu,
         id_mat=etudiermat.id_mat,
@@ -78,6 +97,6 @@ async def update_data(id:int,etudiermat:Etudiermat,user: User = Depends(check_Ad
     return await read_data()
 
 @etudiermat_router.delete("/{id}")
-async def delete_data(id:int,user: User = Depends(check_Adminpermissions)):
+async def delete_data(id:int,):
     con.execute(etudiermats.delete().where(etudiermats.c.id==id))
     return await read_data()

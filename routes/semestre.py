@@ -30,8 +30,32 @@ async def semestre_filiere_data():
         results.append(result)
 
     return results
+@semestre_router.get("/semestre_filiere/{id}")
+async def semestre_filiere_data_by_id(id: int):
+    # Créer une session
+    Session = sessionmaker(bind=con)
+    session = Session()
+
+    # Effectuer la requête pour récupérer les filières avec leurs départements
+    semestres = session.query(Semestre).join(Semestre.filieres).filter(Semestre.id==id)
+
+    # Parcourir les filières et récupérer leurs départements associés
+    results = []
+    for semestre in semestres:
+        result = {
+            "id": semestre.id,
+            "nom": semestre.nom,
+            "id_fil": semestre.id_fil,
+            "date_debut": semestre.date_debut,
+            "date_fin": semestre.date_fin,
+            "filiere": semestre.filieres.nom,
+        }
+        results.append(result)
+
+    return results
+
 @semestre_router.get("/{nom}")
-async def filiere_id(nom:str,user: User = Depends(check_Adminpermissions)):
+async def filiere_id(nom:str,):
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()
@@ -46,7 +70,7 @@ async def filiere_id(nom:str,user: User = Depends(check_Adminpermissions)):
     
     return id
 @semestre_router.get("/")
-async def read_data(user: User = Depends(check_Adminpermissions)):
+async def read_data():
     query = Semestre.__table__.select()
     result_proxy = con.execute(query)   
     results = []
@@ -68,7 +92,7 @@ async def read_data(user: User = Depends(check_Adminpermissions)):
     
     return results
 @semestre_router.get("/{nom}")
-async def filiere_id(nom:str,user: User = Depends(check_Adminpermissions)):
+async def filiere_id(nom:str,):
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()
@@ -84,7 +108,7 @@ async def filiere_id(nom:str,user: User = Depends(check_Adminpermissions)):
     return id
     # return con.execute(semestres.select().fetchall())
 @semestre_router.get("/etudiants_semestres")
-async def semestres_etudiants_data(user: User = Depends(check_Adminpermissions)):
+async def semestres_etudiants_data():
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()
@@ -142,7 +166,7 @@ async def semestre_filiere_data_by_id_fil(id:int,user: User = Depends(check_perm
 
     return results
 # @semestre_router.get("/{id}")
-# async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
+# async def read_data_by_id(id:int,):
 #     query = Semestre.__table__.select().where(Semestre.__table__.c.id==id)
 #     result_proxy = con.execute(query)   
 #     results = []
@@ -155,7 +179,7 @@ async def semestre_filiere_data_by_id_fil(id:int,user: User = Depends(check_perm
 #     # return con.execute(semestres.select().where(semestres.c.id==id)).fetchall()
 
 @semestre_router.post("/")
-async def write_data(semestre:SemestreBase,user: User = Depends(check_Adminpermissions)):
+async def write_data(semestre:SemestreBase,):
     print("nom",semestre.nom)
     con.execute(Semestre.__table__.insert().values(
         nom=semestre.nom,
@@ -166,7 +190,7 @@ async def write_data(semestre:SemestreBase,user: User = Depends(check_Adminpermi
     return await read_data()
 
 @semestre_router.put("/{id}")
-async def update_data(id:int,semestre:SemestreBase,user: User = Depends(check_Adminpermissions)):
+async def update_data(id:int,semestre:SemestreBase,):
     con.execute(Semestre.__table__.update().values(
         nom=semestre.nom,
         id_fil=semestre.id_fil,
@@ -176,6 +200,6 @@ async def update_data(id:int,semestre:SemestreBase,user: User = Depends(check_Ad
     return await read_data()
 
 @semestre_router.delete("/{id}")
-async def delete_data(id:int,user: User = Depends(check_Adminpermissions)):
+async def delete_data(id:int,):
     con.execute(Semestre.__table__.delete().where(Semestre.__table__.c.id==id))
     return await read_data()

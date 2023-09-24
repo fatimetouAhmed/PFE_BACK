@@ -14,7 +14,7 @@ from sqlalchemy.sql import func
 
 semestresmatieres_router=APIRouter()
 @semestresmatieres_router.get("/read")
-def get_semestresmatieres_data(user: User = Depends(check_superviseurpermissions)):
+def get_semestresmatieres_data():
     Session = sessionmaker(bind=con)
     session = Session()
     query = select(semestresmatieres.c.id,
@@ -30,10 +30,30 @@ def get_semestresmatieres_data(user: User = Depends(check_superviseurpermissions
                        'id_mat': row.id_mat,
                        'id_sem': row.id_sem,
                        'matiere_libelle': row.libelle, 
-                       'filiere_nom': row.nom} for row in result]
+                       'semestre': row.nom} for row in result]
+    return formatted_data
+
+@semestresmatieres_router.get("/read/{id}")
+async def read_data_by_id(id:int,):
+    Session = sessionmaker(bind=con)
+    session = Session()
+    query = select(semestresmatieres.c.id,
+                   semestresmatieres.c.id_mat,
+                   semestresmatieres.c.id_sem,
+                   Matiere.libelle,
+                   Semestres.nom). \
+        join(Matiere, Matiere.id == semestresmatieres.c.id_mat). \
+        join(Semestres, Semestres.id == semestresmatieres.c.id_sem).filter(semestresmatieres.c.id==id)
+
+    result = session.execute(query).fetchall()
+    formatted_data = [{'id': row.id,
+                       'id_mat': row.id_mat,
+                       'id_sem': row.id_sem,
+                       'matiere': row.libelle, 
+                       'semestre': row.nom} for row in result]
     return formatted_data
 @semestresmatieres_router.get("/{id}")
-def get_semestresmatieres_data(id:int,user: User = Depends(check_permissions)):
+def get_semestresmatieres_data(id:int):
     Session = sessionmaker(bind=con)
     session = Session()
     query = select(semestresmatieres.c.id,
@@ -47,12 +67,9 @@ def get_semestresmatieres_data(id:int,user: User = Depends(check_permissions)):
                        'id_mat': row.id_mat,
                        'matieres': row.libelle,} for row in result]
     return formatted_data
-# Utilisation de la fonction pour afficher les données
-# data = get_semestresmatieres_data()
-# for row in data:
-#      print(f"ID: {row['id']}, Matière: {row['matiere_libelle']}, Filière: {row['filiere_nom']}")
+
 @semestresmatieres_router.get("/")
-async def read_data(user: User = Depends(check_Adminpermissions)):
+async def read_data():
     query =semestresmatieres.select()
     result_proxy = con.execute(query)   
     results = []
@@ -65,28 +82,11 @@ async def read_data(user: User = Depends(check_Adminpermissions)):
         results.append(result)
     
     return results
-    # return con.execute(semestresmatieres.select().fetchall())
-
-# @semestresmatieres_router.get("/{id}")
-# async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
-#     query =semestresmatieres.select().where(semestresmatieres.c.id==id)
-#     result_proxy = con.execute(query)   
-#     results = []
-#     for row in result_proxy:
-#         result = {
-#                   "id_mat": row.id_mat,
-#                   "id_sem": row.id_sem,}   # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
-#         results.append(result)
-    
-#     return results
-#     # return con.execute(semestresmatieres.select().where(semestresmatieres.c.id==id)).fetchall()
-
 
 @semestresmatieres_router.post("/")
-async def write_data(semestresmatiere:SemestresMatieres,user: User = Depends(check_Adminpermissions)):
+async def write_data(semestresmatiere:SemestresMatieres,):
 
     con.execute(semestresmatieres.insert().values(
-
         id_mat=semestresmatiere.id_mat,
         id_sem=semestresmatiere.id_sem,
         ))
@@ -95,7 +95,7 @@ async def write_data(semestresmatiere:SemestresMatieres,user: User = Depends(che
 
 
 @semestresmatieres_router.put("/{id}")
-async def update_data(id:int,semestresmatiere:SemestresMatieres,user: User = Depends(check_Adminpermissions)):
+async def update_data(id:int,semestresmatiere:SemestresMatieres,):
     con.execute(semestresmatieres.update().values(
         id_mat=semestresmatiere.id_mat,
         id_sem=semestresmatiere.id_sem,
@@ -103,6 +103,6 @@ async def update_data(id:int,semestresmatiere:SemestresMatieres,user: User = Dep
     return await read_data()
 
 @semestresmatieres_router.delete("/{id}")
-async def delete_data(id:int,user: User = Depends(check_Adminpermissions)):
+async def delete_data(id:int,):
     con.execute(semestresmatieres.delete().where(semestresmatieres.c.id==id))
     return await read_data()
