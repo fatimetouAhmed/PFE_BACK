@@ -24,7 +24,7 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import sessionmaker, relationship, Session
 
 from auth.authConfig import create_user,UserResponse,UserCreate,recupere_user,get_current_user,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
-from auth.authConfig import get_current_user,read_users_nom,superviseur_id
+from auth.authConfig import get_current_user,read_users_nom,superviseur_id,hash_password
 import os
 from models.etudiant import Etudiant
 from routes.user import user_router
@@ -120,11 +120,141 @@ app.include_router(historique_router, prefix="/historiques", tags=["Historiques"
 # async def home():
 #     return {"message": "Bienvenue sur l'API de gestion des utilisateurs et des salles."}
 
-
+#--------------------------authentication---------------------#
 @app.post("/registeruser/", response_model=UserResponse)
-def create_user_route(user: UserCreate, db: Session = Depends(get_db)):
-    print(user)
-    return create_user(db, user)
+async def create_user(
+    nom: str = Form(...),
+    prenom: str = Form(...),
+    email: str = Form(...),
+    pswd: str = Form(...),
+    role: str = Form(...),
+    superviseur_id: int = Form(...),
+    file: UploadFile = File(...), db: Session = Depends(get_db)):
+    
+    try:
+        image = await file.read()      
+        # Spécifiez le chemin complet du dossier où vous souhaitez stocker l'image
+        upload_folder = r"C:\Users\hp\Desktop\PFE\PFE_FRONT\images\users"
+        # id_surv_int=int(id_surv)
+        # if id_surv == '' or id_surv is None:
+        #  id_surv_int = 0
+        # else:
+        #    id_surv_int = int(id_surv)
+     
+        # Assurez-vous que le dossier existe, sinon, créez-le
+        os.makedirs(upload_folder, exist_ok=True)      
+        # Générez un nom de fichier unique (par exemple, basé sur le timestamp)
+        unique_filename = f"{datetime.now().timestamp()}.jpg"   
+        # Construisez le chemin complet du fichier
+        file_path = os.path.join(upload_folder, unique_filename)  
+        file_path_str = str(file_path).replace("\\", "/")
+        print(file_path_str)
+        # Enregistrez l'image dans le dossier spécifié
+        with open(file_path, "wb") as f:
+            f.write(image)
+        print(file_path_str)    
+        # date_N = datetime.strptime('2023-09-01T22:56:45.274Z', '%Y-%m-%dT%H:%M:%S.%fZ')
+        # date_insecription = datetime.strptime('2023-09-01T22:56:45.274Z', '%Y-%m-%dT%H:%M:%S.%fZ')
+        hashed_password = hash_password('ghhg')
+        db_user = User(nom=nom, prenom=prenom, email=email, pswd=hashed_password, role=role ,photo=file_path_str)
+        db.add(db_user)
+        db.commit()
+        db.refresh(db_user)
+
+        if role == "admin":
+            admin = Administrateur(user_id=db_user.id)
+            db.add(admin)
+            db.commit()
+            db.refresh(admin)
+        elif role == "surveillant":
+            superviseur_id = superviseur_id  # Récupération du superviseur_id depuis user
+            surveillant = Surveillant(user_id=db_user.id, superviseur_id=superviseur_id)  # Utilisation du superviseur_id lors de la création du surveillant
+            db.add(surveillant)
+            db.commit()
+            db.refresh(surveillant)
+        elif role == "superviseur":
+            superviseur = Superviseur(user_id=db_user.id)
+            db.add(superviseur)
+            db.commit()
+            db.refresh(superviseur)
+
+        return UserResponse(id=db_user.id, nom=db_user.nom, prenom=db_user.prenom, email=db_user.email, role=db_user.role,photo=db_user.photo)
+    except Exception as e:
+        return {"error": str(e)}
+from fastapi import HTTPException
+
+@app.put("/updateuser/{user_id}", response_model=UserResponse)
+async def update_user(
+    user_id: int,
+    nom: str = Form(None),
+    prenom: str = Form(None),
+    email: str = Form(None),
+    pswd: str = Form(None),
+    role: str = Form(None),
+    superviseur_id: int = Form(None),
+    file: UploadFile = File(None),
+    db: Session = Depends(get_db)
+):
+    try:
+        # Recherchez l'utilisateur dans la base de données par ID
+        db_user = db.query(User).filter(User.id == user_id).first()
+        
+        if not db_user:
+            raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+
+        # Supprimez l'ancienne photo du dossier
+        if file:
+            if db_user.photo:
+                os.remove(db_user.photo)
+
+            image = await file.read()
+            upload_folder = r"C:\Users\hp\Desktop\PFE\PFE_FRONT\images\users"
+
+            # Générez un nom de fichier unique pour la nouvelle photo
+            unique_filename = f"{datetime.now().timestamp()}.jpg"
+            # Construisez le chemin complet du nouveau fichier
+            file_path = os.path.join(upload_folder, unique_filename)
+            file_path_str = str(file_path).replace("\\", "/")
+            print(file_path_str)
+            
+            # Enregistrez la nouvelle image dans le dossier spécifié
+            with open(file_path, "wb") as f:
+                f.write(image)
+            print(file_path_str)
+
+            # Mettez à jour le chemin de la nouvelle photo dans la base de données
+            db_user.photo = file_path_str
+        
+        # Mettez à jour les autres colonnes en fonction des données fournies
+        if nom:
+            db_user.nom = nom
+        if prenom:
+            db_user.prenom = prenom
+        if email:
+            db_user.email = email
+        if pswd:
+            # Vous pouvez mettre à jour le mot de passe de manière appropriée ici
+            db_user.pswd = hash_password(pswd)
+        if role:
+            db_user.role = role
+        if superviseur_id:
+            db_user.superviseur_id = superviseur_id
+
+        db.commit()
+        db.refresh(db_user)
+
+        return UserResponse(
+            id=db_user.id,
+            nom=db_user.nom,
+            prenom=db_user.prenom,
+            email=db_user.email,
+            role=db_user.role,
+            photo=db_user.photo
+        )
+    except Exception as e:
+        # Gérez les erreurs en conséquence
+        raise HTTPException(status_code=500, detail="Erreur lors de la mise à jour de l'utilisateur")
+
 @app.put("/{id}")
 async def update_data(id:int,usercreate:UserCreate,user: User = Depends(check_Adminpermissions)):
     con.execute(User.__table__.update().values(
@@ -185,7 +315,7 @@ def hello_world():
     return "hello world"
 
 #UPLOAD_FOLDER = Path("C:/Users/pc/StudioProjects/pfe/PFE_FRONT/images")
-UPLOAD_FOLDER = Path("C:/Users/pc/StudioProjects/pfe/PFE_FRONT/images/pv")
+UPLOAD_FOLDER = Path("C:/Users/hp/Desktop/PFE/PFE_FRONT/images/pv")
 
 UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
 @app.post("/upload/")
@@ -194,7 +324,7 @@ async def upload_image(file1: str):
     try:
         image = await file1.read()      
         # Spécifiez le chemin complet du dossier où vous souhaitez stocker l'image
-        upload_folder = r"C:\Users\pc\StudioProjects\pfe\PFE_FRONT\images\pv"
+        upload_folder = r"C:\Users\hp\Desktop\PFE\PFE_FRONT\images\pv"
        
         # Assurez-vous que le dossier existe, sinon, créez-le
         os.makedirs(upload_folder, exist_ok=True)      
@@ -362,7 +492,7 @@ async def pv(file: UploadFile = File(...), current_user: User = Depends(recupere
     try:
         image = await file.read()      
         # Spécifiez le chemin complet du dossier où vous souhaitez stocker l'image
-        upload_folder = r"C:\Users\pc\StudioProjects\pfe\PFE_FRONT\images\pv"
+        upload_folder = r"C:\Users\hp\Desktop\PFE\PFE_FRONT\images\pv"
        
         # Assurez-vous que le dossier existe, sinon, créez-le
         os.makedirs(upload_folder, exist_ok=True)      
@@ -406,6 +536,6 @@ def get_surveillant_info(user: User = Depends(check_survpermissions)):
         "typecompte": surveillant.typecompte
     }
 if __name__ == "__main__":
-    uvicorn.run(app, port=8000, host='127.0.0.1')
+    uvicorn.run(app, port=8000, host='192.168.8.100')
  
 # 192.168.53.113  PUT /etudiants/32 HTTP/1.1" PUT /etudiant/2 HTTP/1.1"

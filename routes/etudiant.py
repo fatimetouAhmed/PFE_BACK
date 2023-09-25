@@ -145,7 +145,7 @@ async def read_data_by_id(id:int,):
     return results
     # return con.execute(Etudiant.select().where(Etudiant.c.id==id)).fetchall()
 
-UPLOAD_FOLDER = Path("C:/Users/pc/StudioProjects/pfe/PFE_FRONT/images/etudiants")
+UPLOAD_FOLDER = Path("C:/Users/hp/Desktop/PFE/PFE_FRONT/images/etudiants")
 UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
 @etudiant_router.post("/")
 async def write_data(nom: str= Form(...),
@@ -160,7 +160,7 @@ async def write_data(nom: str= Form(...),
     try:
         image = await file.read()      
         # Spécifiez le chemin complet du dossier où vous souhaitez stocker l'image
-        upload_folder = r"C:\Users\pc\StudioProjects\pfe\PFE_FRONT\images\etudiants"
+        upload_folder = r"C:\Users\hp\Desktop\PFE\PFE_FRONT\images\etudiants"
        
         # Assurez-vous que le dossier existe, sinon, créez-le
         os.makedirs(upload_folder, exist_ok=True)      
@@ -215,7 +215,7 @@ async def update_data(id:int,nom: str= Form(...),
     try:
         image = await file.read()      
         # Spécifiez le chemin complet du dossier où vous souhaitez stocker l'image
-        upload_folder = r"C:\Users\pc\StudioProjects\pfe\PFE_FRONT\images\etudiants"
+        upload_folder = r"C:\Users\hp\Desktop\PFE\PFE_FRONT\images\etudiants"
        
         # Assurez-vous que le dossier existe, sinon, créez-le
         os.makedirs(upload_folder, exist_ok=True)      

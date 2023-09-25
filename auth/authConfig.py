@@ -132,7 +132,7 @@ async def create_user(
     try:
         image = await file.read()      
         # Spécifiez le chemin complet du dossier où vous souhaitez stocker l'image
-        upload_folder = r"C:\Users\pc\StudioProjects\pfe\PFE_FRONT\images\users"
+        upload_folder = r"C:\Users\hp\Desktop\PFE\PFE_FRONT\images\users"
         # id_surv_int=int(id_surv)
         # if id_surv == '' or id_surv is None:
         #  id_surv_int = 0
@@ -182,9 +182,9 @@ async def create_user(
 
 
 # Route pour créer un utilisateur
-@app.post("/registeruser/", response_model=UserResponse)
-def create_user_route(user: UserCreate, db: Session = Depends(get_db)):
-    return create_user(db, user)
+#@app.post("/registeruser/", response_model=UserResponse)
+#def create_user_route(user: UserCreate, db: Session = Depends(get_db)):
+ #   return create_user(db, user)
 
 #authentification
 # ...
