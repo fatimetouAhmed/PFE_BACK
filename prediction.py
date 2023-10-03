@@ -29,7 +29,7 @@ models = [
 async def predict_face(image_path,user_id: int = Depends(recupere_userid),user: User = Depends(check_survpermissions)):
   #  try:     C:\Users\pc\StudioProjects\pfe\pfe_font\PFE_FRONT\images
     #result = DeepFace.verify(image_path, img2_path = "image.jpg")C:\Users\pc\Desktop\PFE\curd_fastapi\image 
-        results = DeepFace.find(img_path =image_path, db_path = "C:/Users/hp/Desktop/PFE/PFE_FRONT/images/etudiants",model_name=models[1],enforce_detection=False)
+        results = DeepFace.find(img_path =image_path, db_path = "C:/Users/pc/StudioProjects/pfe/PFE_FRONT/images/etudiants",model_name=models[1],enforce_detection=False)
     #    print("---------------------------"+pathi+"--------------------------------")
         
         try:
@@ -50,7 +50,7 @@ async def predict_face(image_path,user_id: int = Depends(recupere_userid),user: 
                     raise Exception("Étudiant inexistant")
         except Exception as e:
             url = photo[0][0] if len(photo) > 0 and len(photo[0]) > 0 else None
-            print("path_image")
+            print(url)
             result = await write_data(user_id, user)
             return result
 

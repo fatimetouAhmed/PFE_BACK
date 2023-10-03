@@ -134,7 +134,7 @@ async def create_user(
     try:
         image = await file.read()      
         # Spécifiez le chemin complet du dossier où vous souhaitez stocker l'image
-        upload_folder = r"C:\Users\hp\Desktop\PFE\PFE_FRONT\images\users"
+        upload_folder = r"C:\Users\pc\StudioProjects\pfe\PFE_FRONT\images\users"
         # id_surv_int=int(id_surv)
         # if id_surv == '' or id_surv is None:
         #  id_surv_int = 0
@@ -208,7 +208,7 @@ async def update_user(
                 os.remove(db_user.photo)
 
             image = await file.read()
-            upload_folder = r"C:\Users\hp\Desktop\PFE\PFE_FRONT\images\users"
+            upload_folder = r"C:\Users\pc\StudioProjects\pfe\PFE_FRONT\images\users"
 
             # Générez un nom de fichier unique pour la nouvelle photo
             unique_filename = f"{datetime.now().timestamp()}.jpg"
@@ -315,7 +315,7 @@ def hello_world():
     return "hello world"
 
 #UPLOAD_FOLDER = Path("C:/Users/pc/StudioProjects/pfe/PFE_FRONT/images")
-UPLOAD_FOLDER = Path("C:/Users/hp/Desktop/PFE/PFE_FRONT/images/pv")
+UPLOAD_FOLDER = Path("C:/Users/pc/StudioProjects/pfe/PFE_FRONT/images/pv")
 
 UPLOAD_FOLDER.mkdir(parents=True, exist_ok=True)
 @app.post("/upload/")
@@ -324,7 +324,7 @@ async def upload_image(file1: str):
     try:
         image = await file1.read()      
         # Spécifiez le chemin complet du dossier où vous souhaitez stocker l'image
-        upload_folder = r"C:\Users\hp\Desktop\PFE\PFE_FRONT\images\pv"
+        upload_folder = r"C:\Users\pc\StudioProjects\pfe\PFE_FRONT\images\pv"
        
         # Assurez-vous que le dossier existe, sinon, créez-le
         os.makedirs(upload_folder, exist_ok=True)      
@@ -375,7 +375,7 @@ async def pv(nom: str= Form(...),
     try:
         image = await file.read()      
         # Spécifiez le chemin complet du dossier où vous souhaitez stocker l'image
-        upload_folder = r"C:\Users\hp\Desktop\PFE\PFE\PFE_FRONT\images\etudiants"
+        upload_folder = r"C:\Users\pc\StudioProjects\pfe\PFE_FRONT\images\etudiants"
        
         # Assurez-vous que le dossier existe, sinon, créez-le
         os.makedirs(upload_folder, exist_ok=True)      
@@ -492,7 +492,7 @@ async def pv(file: UploadFile = File(...), current_user: User = Depends(recupere
     try:
         image = await file.read()      
         # Spécifiez le chemin complet du dossier où vous souhaitez stocker l'image
-        upload_folder = r"C:\Users\hp\Desktop\PFE\PFE_FRONT\images\pv"
+        upload_folder = r"C:\Users\pc\StudioProjects\pfe\PFE_FRONT\images\pv"
        
         # Assurez-vous que le dossier existe, sinon, créez-le
         os.makedirs(upload_folder, exist_ok=True)      
@@ -536,6 +536,6 @@ def get_surveillant_info(user: User = Depends(check_survpermissions)):
         "typecompte": surveillant.typecompte
     }
 if __name__ == "__main__":
-    uvicorn.run(app, port=8000, host='192.168.8.100')
+    uvicorn.run(app, port=8000, host='127.0.0.1')
  
 # 192.168.53.113  PUT /etudiants/32 HTTP/1.1" PUT /etudiant/2 HTTP/1.1"
