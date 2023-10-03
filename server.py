@@ -193,7 +193,8 @@ async def update_user(
     role: str = Form(None),
     superviseur_id: int = Form(None),
     file: UploadFile = File(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user: User = Depends(check_Adminpermissions)
 ):
     try:
         # Recherchez l'utilisateur dans la base de données par ID
@@ -355,11 +356,11 @@ async def predict_image(file: UploadFile = File(...), user_id: int = Depends(rec
         image = await file.read()
         with open("image.jpg", "wb") as f:
             f.write(image)
+            print("image.jpg")
         result = await predict_face("image.jpg", user_id, user)
         return result
     except Exception as e:
         return {"error": str(e)}
-
 
 
 @app.post('/api/etudiant')
@@ -385,7 +386,7 @@ async def pv(nom: str= Form(...),
         file_path = os.path.join(upload_folder, unique_filename)  
         file_path_str = str(file_path).replace("\\", "/")
         print(file_path_str)
-        # Enregistrez l'image dans le dossier spécifié
+        # Enregpistrez l'image dans le dossier spécifié
         with open(file_path, "wb") as f:
             f.write(image)
         print(file_path_str)    

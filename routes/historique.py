@@ -102,7 +102,7 @@ async def read_data_by_id(id:int,user: User = Depends(check_Adminpermissions)):
     # return con.execute(historiques.__table__.select().where(historiques.__table__.c.id==id)).fetchall()
 
 @historique_router.post("/postcasetudiant")
-async def write_data_case_etudiant(id_etu:int,user_id: int = Depends(recupere_userid),user: User = Depends(check_survpermissions)):
+async def write_data_case_etudiant(image1:str,id_etu:int,user_id: int = Depends(recupere_userid),user: User = Depends(check_survpermissions)):
     date=datetime.now()
     id_super=0
     surveillant = user_id
@@ -183,12 +183,12 @@ async def write_data_case_etudiant(id_etu:int,user_id: int = Depends(recupere_us
         superviseur_id=id_super,
         is_read=False,
         id_exam=salle[0]["id_exam"],
-        image="",
+        image=image1,
     ))
     return description
 
 @historique_router.post("/")
-async def write_data(user_id: int = Depends(recupere_userid),user: User = Depends(check_survpermissions)):
+async def write_data(image1:str,user_id: int = Depends(recupere_userid),user: User = Depends(check_survpermissions)):
     date=datetime.now()
     id_super=0
     surveillant = user_id
@@ -259,8 +259,13 @@ async def write_data(user_id: int = Depends(recupere_userid),user: User = Depend
         superviseur_id=id_super,
         is_read=False,
         id_exam=salle[0]["id_exam"],
-        image="",
+        image=image1,
     ))
+    print("description", description)
+    print("date",date )
+    print("superviseur_id",id_super )
+    print("salleexam", salle[0]["id_exam"])
+    print("image1",image1 )
     return description
 
 
