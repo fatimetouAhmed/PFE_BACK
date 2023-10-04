@@ -1,11 +1,12 @@
 from fastapi import FastAPI, File, UploadFile,HTTPException,Header,status,Depends,APIRouter,Form
 import uvicorn
+from models.surveillance import Surveillants
 #from prediction import read_image
 from starlette.responses import JSONResponse
 from prediction import predict_face
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
-from sqlalchemy import create_engine, Column, Integer, String ,Sequence,and_
+from sqlalchemy import create_engine, Column, Integer, String ,Sequence,and_,select
 from sqlalchemy.ext.declarative import declarative_base
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -193,7 +194,8 @@ async def update_user(
     role: str = Form(None),
     superviseur_id: int = Form(None),
     file: UploadFile = File(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user: User = Depends(check_Adminpermissions)
 ):
     try:
         # Recherchez l'utilisateur dans la base de données par ID
@@ -355,11 +357,11 @@ async def predict_image(file: UploadFile = File(...), user_id: int = Depends(rec
         image = await file.read()
         with open("image.jpg", "wb") as f:
             f.write(image)
+            print("image.jpg")
         result = await predict_face("image.jpg", user_id, user)
         return result
     except Exception as e:
         return {"error": str(e)}
-
 
 
 @app.post('/api/etudiant')
@@ -385,7 +387,7 @@ async def pv(nom: str= Form(...),
         file_path = os.path.join(upload_folder, unique_filename)  
         file_path_str = str(file_path).replace("\\", "/")
         print(file_path_str)
-        # Enregistrez l'image dans le dossier spécifié
+        # Enregpistrez l'image dans le dossier spécifié
         with open(file_path, "wb") as f:
             f.write(image)
         print(file_path_str)    
@@ -515,9 +517,62 @@ async def pv(file: UploadFile = File(...), current_user: User = Depends(recupere
     except Exception as e:
         return {"error": str(e)}
 @app.get('/pv')
-async def get_pvs(db: Session = Depends(get_db),user: User = Depends(check_survpermissions)):
-    pvs = db.query(PV).all()
-    return pvs
+async def get_pvs():
+    Session = sessionmaker(bind=con)
+    session = Session()
+    query = select(PV.__table__.c.id,
+                   PV.__table__.c.photo,
+                   PV.__table__.c.description,
+                   PV.__table__.c.nni,
+                    PV.__table__.c.tel,
+                   User.prenom,PV.__table__.c.date_pv). \
+        join(Surveillant, Surveillant.user_id == PV.__table__.c.surveillant_id). \
+        join(User, Surveillant.user_id == User.id)
+
+    result = session.execute(query).fetchall()
+    results = []
+    for row in result:
+        nom_fichier = os.path.basename(row.photo)
+        result = {
+                  "id": row.id,
+                  "photo": nom_fichier,
+                  "description": row.description,
+                  "nni": row.nni,
+                  "tel": row.tel,
+                  "surveillant": row.prenom,
+                  "date_pv": row.date_pv,
+                  }  # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
+        results.append(result)
+    
+    return results
+@app.get('/pv/{id}')
+async def get_pvs_by_id(id:int):
+    Session = sessionmaker(bind=con)
+    session = Session()
+    query = select(PV.__table__.c.id,
+                   PV.__table__.c.photo,
+                   PV.__table__.c.description,
+                   PV.__table__.c.nni,
+                    PV.__table__.c.tel,
+                   User.prenom,PV.__table__.c.date_pv). \
+        join(Surveillant, Surveillant.user_id == PV.__table__.c.surveillant_id). \
+        join(User, Surveillant.user_id == User.id).filter(PV.__table__.c.id==id)
+    result = session.execute(query).fetchall()
+    results = []
+    for row in result:
+        nom_fichier = os.path.basename(row.photo)
+        result = {
+                  "id": row.id,
+                  "photo": nom_fichier,
+                  "description": row.description,
+                  "nni": row.nni,
+                  "tel": row.tel,
+                  "surveillant": row.prenom,
+                  "date_pv": row.date_pv,
+                  }  # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
+        results.append(result)
+    
+    return results
 @app.get('/pv/curentuser')
 async def get_pvs_user(user_id: int = Depends(recupere_userid), user: User = Depends(check_survpermissions), db: Session = Depends(get_db)):
     pvs = db.query(PV).filter_by(surveillant_id=user_id).all()

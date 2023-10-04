@@ -14,6 +14,8 @@ from routes.historique import write_data
 from fastapi import APIRouter,Depends
 from auth.authConfig import recupere_userid,create_user,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
 import os
+from datetime import datetime, timedelta
+
 models = [
           "VGG-Face", 
           "Facenet", 
@@ -27,8 +29,9 @@ models = [
             ]
 
 async def predict_face(image_path,user_id: int = Depends(recupere_userid),user: User = Depends(check_survpermissions)):
-  #  try:     C:\Users\pc\StudioProjects\pfe\pfe_font\PFE_FRONT\images
-    #result = DeepFace.verify(image_path, img2_path = "image.jpg")C:\Users\pc\Desktop\PFE\curd_fastapi\image 
+  
+        print( "test",image_path)
+        
         results = DeepFace.find(img_path =image_path, db_path = "C:/Users/pc/StudioProjects/pfe/PFE_FRONT/images/etudiants",model_name=models[1],enforce_detection=False)
     #    print("---------------------------"+pathi+"--------------------------------")
         
@@ -44,14 +47,23 @@ async def predict_face(image_path,user_id: int = Depends(recupere_userid),user: 
                     # print(image_name)
                     print("url:", url)
                     id = get_etudiant(url)
-                    donne = await get_infoexamun(image_name, id, user_id, user)
+                    donne = await get_infoexamun(image_path,image_name, id, user_id, user)
                     return donne
                 else:
                     raise Exception("Étudiant inexistant")
         except Exception as e:
             url = photo[0][0] if len(photo) > 0 and len(photo[0]) > 0 else None
-            print(url)
-            result = await write_data(user_id, user)
+            timestamp = datetime.now().timestamp()
+            notification_filename = f"{timestamp}.jpg"
+                
+            notification_folder = "C:/Users/pc/StudioProjects/pfe/PFE_FRONT/images/notifications"
+            notification_path = os.path.join(notification_folder, notification_filename)
+            os.rename(image_path, notification_path)
+            
+            # Appelez la fonction write_data avec l'URL du dossier "notifications"
+            image_etu_url = notification_path.replace("\\", "/")
+            print("exception")
+            result = await write_data(image_etu_url,user_id, user,)
             return result
 
       

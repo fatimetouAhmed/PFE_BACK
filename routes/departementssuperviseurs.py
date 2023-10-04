@@ -7,21 +7,21 @@ from models.departementssuperviseurs import departementssuperviseurs
 from models.departementssuperviseurs import Departements
 from models.departementssuperviseurs import Superviseur
 from schemas.departementssuperviseurs import DepartementsSuperviseurs
-
+from sqlalchemy.exc import OperationalError
 
 departementssuperviseurs_router=APIRouter()
 @departementssuperviseurs_router.get("/read")
 def get_filieresmatieres_data():
-    Session = sessionmaker(bind=con)
-    session = Session()
-    # query = select(departementssuperviseurs.c.id,
-    #                departementssuperviseurs.c.id_sup,
-    #                 departementssuperviseurs.c.id_dep,
-    #                departementssuperviseurs.c.date_debut,
-    #                departementssuperviseurs.c.date_fin,
-    #                Departements.nom)
+    # Session = sessionmaker(bind=con)
+    # session = Session()
+    # # query = select(departementssuperviseurs.c.id,
+    # #                departementssuperviseurs.c.id_sup,
+    # #                 departementssuperviseurs.c.id_dep,
+    # #                departementssuperviseurs.c.date_debut,
+    # #                departementssuperviseurs.c.date_fin,
+    # #                Departements.nom)
 
-    # result = session.execute(query).fetchall()
+    # # result = session.execute(query).fetchall()
     query =Departements.__table__.select()
     result = con.execute(query)  
     formatted_data = [{'id': row.id,
@@ -29,28 +29,37 @@ def get_filieresmatieres_data():
                        } for row in result]
     return formatted_data
 @departementssuperviseurs_router.get("/read/{id}")
-def get_filieresmatieres_data(id:int,):
-    Session = sessionmaker(bind=con)
-    session = Session()
-    query = select(departementssuperviseurs.c.id,
-                   departementssuperviseurs.c.id_sup,
-                    departementssuperviseurs.c.id_dep,
-                   departementssuperviseurs.c.date_debut,
-                   departementssuperviseurs.c.date_fin,
-                   Departements.nom,). \
-        join(Departements, Departements.id == departementssuperviseurs.c.id_dep). \
-        join(Superviseur, Superviseur.user_id == id). \
-        join(User, Superviseur.user_id == User.id)
+def get_filieresmatieres_data(id: int):
+    try:
+        Session = sessionmaker(bind=con)
+        session = Session()
+        
+        query = select(departementssuperviseurs.c.id,
+                       departementssuperviseurs.c.id_sup,
+                       departementssuperviseurs.c.id_dep,
+                       departementssuperviseurs.c.date_debut,
+                       departementssuperviseurs.c.date_fin,
+                       Departements.nom). \
+            join(Departements, Departements.id == departementssuperviseurs.c.id_dep). \
+            join(Superviseur, Superviseur.user_id == id). \
+            join(User, Superviseur.user_id == User.id)
 
-    result = session.execute(query).fetchall()
-    formatted_data = [{'id': row.id,
-                       'id_sup': row.id_sup,
-                       'id_dep': row.id_dep,
-                       'departement': row.nom, 
-                       'date_debut': row.date_debut, 
-                        'date_fin': row.date_fin,
-                       } for row in result]
-    return formatted_data
+        result = session.execute(query).fetchall()
+        
+        formatted_data = [{'id': row.id,
+                           'id_sup': row.id_sup,
+                           'id_dep': row.id_dep,
+                           'departement': row.nom, 
+                           'date_debut': row.date_debut, 
+                           'date_fin': row.date_fin,
+                           } for row in result]
+
+        return formatted_data
+    except OperationalError as e:
+        return {"error": "Erreur de base de données : " + str(e)}
+    finally:
+        if session is not None:
+            session.close()
 @departementssuperviseurs_router.get("/read_data/{id}")
 def get_filieresmatieres_read_data(id:int):
     Session = sessionmaker(bind=con)

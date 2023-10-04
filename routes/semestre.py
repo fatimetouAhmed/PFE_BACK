@@ -142,7 +142,7 @@ async def semestres_etudiants_data():
 
     return results
 @semestre_router.get("/semestre/{id}")
-async def semestre_filiere_data_by_id_fil(id:int,user: User = Depends(check_permissions)):
+async def semestre_filiere_data_by_id_fil(id:int):
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()
