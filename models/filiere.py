@@ -1,7 +1,7 @@
 from sqlalchemy import Table,Column,String,Integer,ForeignKey
 from config.db import meta
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 Base = declarative_base()
 class Filieres(Base):
     __tablename__ = 'filieres'

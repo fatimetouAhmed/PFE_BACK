@@ -4,10 +4,10 @@ from sqlalchemy.orm import sessionmaker, relationship, Session
 from passlib.hash import bcrypt
 from sqlalchemy import create_engine, update
 from sqlalchemy.orm import declarative_base 
-from pydantic import BaseModel
+from pydantic import BaseModel,ValidationError
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from jose import JWTError,jwt
+from jose import jwt
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from config.db import con
@@ -35,7 +35,7 @@ def get_db():
 
 # Modèles de données (tables)
 class User(Base):
-    __tablename__ = "users"  # Spécifiez le nom de la table dans la base de données
+    _tablename_ = "users"  # Spécifiez le nom de la table dans la base de données
 
     id = Column(Integer, primary_key=True, index=True)
     nom = Column(String(255))
@@ -51,7 +51,7 @@ class User(Base):
 
 
 class Administrateur(Base):
-    __tablename__ = "administrateurs"
+    _tablename_ = "administrateurs"
 
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
     user = relationship("User", back_populates="administrateur", uselist=False)
@@ -59,7 +59,7 @@ class Administrateur(Base):
 
 # ...
 class Surveillant(Base):
-    __tablename__ = "surveillants"
+    _tablename_ = "surveillants"
 
     #id = Column(Integer, pr
     # imary_key=True, index=True)
@@ -72,7 +72,7 @@ class Surveillant(Base):
 
 
 class PV(Base):
-    __tablename__ = "pv"
+    _tablename_ = "pv"
 
     id = Column(Integer, primary_key=True, index=True)
     description = Column(String(255), nullable=True)
@@ -84,7 +84,7 @@ class PV(Base):
     surveillant = relationship("Surveillant", back_populates="pv")
 
 class Superviseur(Base):
-    __tablename__ = "superviseurs"
+    _tablename_ = "superviseurs"
 
     user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
     #sureveillant_id = Column(Integer, ForeignKey("surveillants.user_id"))
@@ -93,7 +93,9 @@ class Superviseur(Base):
     surveillant = relationship("Surveillant", back_populates="superviseur", uselist=False)
 
 app = FastAPI()
-
+class TokenValidationException(HTTPException):
+    def _init_(self, detail: str):
+        super()._init_(status_code=401, detail=detail)
 # Modèle Pydantic pour la création d'un utilisateur
 class UserCreate(BaseModel):
     nom: str
@@ -233,28 +235,41 @@ def get_user(username: str):
     return user
 blacklisted_tokens = set()
 
+
+# ...
+
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     try:
-            # Vérifier si le token est dans la liste noire
+        # Vérifier si le token est dans la liste noire
         if token in blacklisted_tokens:
-            raise HTTPException(status_code=401, detail="Token révoqué")
+            raise TokenValidationException(detail="Token révoqué")
+        
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("email")
         role: str = payload.get("role")  # Récupération du rôle depuis le token
         if email is None or role is None:
-            raise HTTPException(status_code=401, detail="Invalid authentication token")
+            raise TokenValidationException(detail="Invalid authentication token")
+        
         token_data = TokenData(email=email, role=role)  # Ajout du rôle à TokenData
-    except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid authentication token")
+        
+        # Valider le token avec Pydantic
+        TokenData(**payload)  # Cette ligne déclenchera une ValidationError si le token est invalide
+        
+    except TokenValidationException as tve:
+        raise tve
+    except Exception as e:
+        raise TokenValidationException(detail="Invalid authentication token")
+    
     user = get_user_by_email(db, email=token_data.email)
     if user is None:
-        raise HTTPException(status_code=401, detail="User not found")
+        raise TokenValidationException(detail="User not found")
 
     # Vérification des autorisations
     if user.role != token_data.role:  # Vérification du rôle
         raise HTTPException(status_code=403, detail="Insufficient privileges")
 
     return user
+
 
 
 
@@ -323,7 +338,7 @@ def recupere_userid(user: User = Depends(get_current_user)):
     return user_id
 # @app.get("/")
 async def read_data_users():
-    result_proxy = con.execute(User.__table__.select())
+    result_proxy = con.execute(User._table_.select())
     results = []
     for row in result_proxy:
         nom_fichier = os.path.basename(row.photo)
@@ -340,8 +355,8 @@ async def read_data_users():
 
 async def read_data_users_by_id(id:int):
     
-    # query = User.__table__.
-    result_proxy =     con.execute(User.__table__.select().where(User.__table__.c.id==id))
+    # query = User._table_.
+    result_proxy =     con.execute(User._table_.select().where(User.__table__.c.id==id))
     results = []
     for row in result_proxy:
         nom_fichier = os.path.basename(row.photo)
@@ -432,8 +447,8 @@ async def update_data(
 
 @user_router.delete("/{id}")
 async def delete_data(id:int,user: User = Depends(check_Adminpermissions)):
-    # con.execute(Superviseur.__table__.delete().where(Superviseur.__table__.c.user_id==id))
-    # con.execute(Surveillant.__table__.delete().where(Surveillant.__table__.c.user_id==id))
-    # con.execute(Administrateur.__table__.delete().where(Administrateur.__table__.c.user_id==id))
-    con.execute(User.__table__.delete().where(User.__table__.c.id==id))
+    # con.execute(Superviseur._table.delete().where(Superviseur.table_.c.user_id==id))
+    # con.execute(Surveillant._table.delete().where(Surveillant.table_.c.user_id==id))
+    # con.execute(Administrateur._table.delete().where(Administrateur.table_.c.user_id==id))
+    con.execute(User._table_.delete().where(User.__table__.c.id==id))
     return await read_data_users()

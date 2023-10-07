@@ -1,5 +1,5 @@
 from fastapi import APIRouter,Depends
-from auth.authConfig import create_user,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_permissions,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
+# from auth.authConfig import create_user,UserResponse,UserCreate,get_db,authenticate_user,create_access_token,ACCESS_TOKEN_EXPIRE_MINUTES,check_permissions,check_Adminpermissions,check_superviseurpermissions,check_survpermissions,User
 from config.db import con
 from models.filiere import Filieres 
 from models.filiere import Departements 
@@ -31,7 +31,7 @@ async def filiere_departement_data():
     return results
 
 @filiere_router.get("/{id}")
-async def filiere_departement_data_by_id_dep(id:int,):
+async def filiere_departement_data_by_id_dep(id:int):
     # Créer une session
     Session = sessionmaker(bind=con)
     session = Session()

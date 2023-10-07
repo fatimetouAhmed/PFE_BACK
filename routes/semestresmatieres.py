@@ -11,7 +11,7 @@ from models.semestresmatieres import Semestres
 from schemas.semestresmatieres import SemestresMatieres
 from sqlalchemy.orm import selectinload, aliased, subqueryload
 from sqlalchemy.sql import func
-
+from sqlalchemy.exc import OperationalError
 semestresmatieres_router=APIRouter()
 @semestresmatieres_router.get("/read")
 def get_semestresmatieres_data():
@@ -54,19 +54,26 @@ async def read_data_by_id(id:int,):
     return formatted_data
 @semestresmatieres_router.get("/{id}")
 def get_semestresmatieres_data(id:int):
-    Session = sessionmaker(bind=con)
-    session = Session()
-    query = select(semestresmatieres.c.id,
-                   semestresmatieres.c.id_mat,
-                   Matiere.libelle,). \
-        join(Matiere, Matiere.id == semestresmatieres.c.id_mat). \
-        join(Semestres, Semestres.id == semestresmatieres.c.id_sem).filter(Semestres.id==id)
+    try:
+        Session = sessionmaker(bind=con)
+        session = Session()
+        
+        query = select(semestresmatieres.c.id,
+                    semestresmatieres.c.id_mat,
+                    Matiere.libelle,). \
+            join(Matiere, Matiere.id == semestresmatieres.c.id_mat). \
+            join(Semestres, Semestres.id == semestresmatieres.c.id_sem).filter(Semestres.id==id)
 
-    result = session.execute(query).fetchall()
-    formatted_data = [{'id': row.id,
-                       'id_mat': row.id_mat,
-                       'matieres': row.libelle,} for row in result]
-    return formatted_data
+        result = session.execute(query).fetchall()
+        formatted_data = [{'id': row.id,
+                        'id_mat': row.id_mat,
+                        'matieres': row.libelle,} for row in result]
+        return formatted_data
+    except OperationalError as e:
+        return {"error": "Erreur de base de données : " + str(e)}
+    finally:
+        if session is not None:
+            session.close()
 
 @semestresmatieres_router.get("/")
 async def read_data():

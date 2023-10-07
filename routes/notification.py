@@ -25,12 +25,28 @@ async def read_data(user_id: int = Depends(recupere_userid),user: User = Depends
         }
         results.append(result) 
     return results
+@notification_router.get("/admin")
+async def read_data_notifications():
+    query = Notifications.__table__.select()
+    result_proxy = con.execute(query)   
+    results = []
+    for row in result_proxy:
+        result = {           
+            "id": row.id,
+            "content": row.content,
+             "date": row.date,
+             "is_read": row.is_read,
+             "image": row.image,
+             }  # Créez un dictionnaire avec la clé "nom" et la valeur correspondante
+        results.append(result)
+    
+    return results
 @notification_router.get("/{id}")
 async def read_data_by_examun(id):
     #user: User = Depends(check_superviseurpermissions
     Session = sessionmaker(bind=con)
     session = Session()
-    q3 = session.query(Notifications.id,Notifications.content,Notifications.date,Notifications.is_read,Notifications.image).filter(Notifications.is_read==False and Notifications.id_exam==id)
+    q3 = session.query(Notifications.id,Notifications.content,Notifications.date,Notifications.is_read,Notifications.image).filter(Notifications.id_exam==id)
     r3 = q3.all()
     results = []
     for row in r3:

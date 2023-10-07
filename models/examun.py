@@ -1,18 +1,18 @@
 from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Table
 from sqlalchemy.orm import relationship
-from sqlalchemy.ext.declarative import declarative_base
-
+from sqlalchemy.orm import declarative_base
 Base = declarative_base()
+
 
 examuns = Table(
     'examuns',
     Base.metadata,
     Column('id', Integer, primary_key=True),
     Column('type', String(250)),
-    Column('heure_deb',DateTime),
+    Column('heure_deb', DateTime),
     Column('heure_fin', DateTime),
-    Column('id_mat', Integer, ForeignKey('matieres.id'),primary_key=True),
-    Column('id_sal', Integer, ForeignKey('salles.id'),primary_key=True),
+    Column('id_mat', Integer, ForeignKey('matieres.id'), primary_key=True),
+    Column('id_sal', Integer, ForeignKey('salles.id'), primary_key=True),
 )
 
 class Salle(Base):
